@@ -1,0 +1,25 @@
+{
+  "name": "greenshoes",
+  "version": "1.0.0",
+  "description": "A Next.js application with an Express backend and PostgreSQL database.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "server": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "next": "^15.2.3",
+    "pg": "^8.7.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.7"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
