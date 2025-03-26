@@ -1,13 +1,24 @@
 import React from 'react';
+import Link from 'next/link';
+import styles from '../styles/layout.module.css';
 
 const Layout = ({ children }) => {
     return (
-        <div>
-            <header>
-                <h1>GreenShoes</h1>
+        <div className={styles.layoutContainer}>
+            <header className={styles.siteHeader}>
+                <div className={styles.headerContent}>
+                    <h1 className={styles.siteTitle}>GreenShoes</h1>
+                    <nav className={styles.siteNav}>
+                        <Link href="/">Home</Link>
+                        <Link href="/product">Product</Link>
+                        <Link href="/orders/">Orders</Link>
+                    </nav>
+                </div>
             </header>
-            <main>{children}</main>
-            <footer>
+            <main className={styles.siteMain}>
+                {children}
+            </main>
+            <footer className={styles.siteFooter}>
                 <p>&copy; {new Date().getFullYear()} GreenShoes. All rights reserved.</p>
             </footer>
         </div>
