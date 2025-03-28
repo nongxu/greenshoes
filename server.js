@@ -1,6 +1,6 @@
 const express = require('express');
 const next = require('next');
-const db = require('./db/connection');
+// const db = require('./db/connection');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -8,16 +8,20 @@ const handle = app.getRequestHandler();
 
 const server = express();
 
-db(); // Establish database connection
+// db(); // Establishing a database connection
 
 server.use(express.json());
 
-// Define API routes here
+// Mount the route for the product list
+const productsRouter = require('./routes/products');
+server.use('/api/products', productsRouter);
+
+// Example API route (other interfaces can be retained)
 server.get('/api/example', (req, res) => {
     res.json({ message: 'Hello from the API!' });
 });
 
-// Handle Next.js pages
+// Handling Next.js page requests
 server.all('*', (req, res) => {
     return handle(req, res);
 });
@@ -29,11 +33,11 @@ app.prepare().then(() => {
     });
 });
 
-const startServer = async () => {
-    await db.connectDB();
-    server.listen(3000, () => {
-        console.log('Server running on http://localhost:3000');
-    });
-}
-
-startServer();
+// The following is another way to start the server, you can enable the database connection as needed before starting
+// const startServer = async () => {
+//     await db.connectDB();
+//     server.listen(3000, () => {
+//         console.log('Server running on http://localhost:3000');
+//     });
+// }
+// startServer();

@@ -10,8 +10,8 @@ const Layout = ({ children }) => {
                     <h1 className={styles.siteTitle}>GreenShoes</h1>
                     <nav className={styles.siteNav}>
                         <Link href="/">Home</Link>
-                        <Link href="/product">Product</Link>
-                        <Link href="/orders/">Orders</Link>
+                        <Link href="/products-listing">Product</Link>
+                        <Link href="/cart">Cart</Link>
                     </nav>
                 </div>
             </header>
