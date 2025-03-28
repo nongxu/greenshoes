@@ -29,7 +29,7 @@ const Home = () => {
                     }}
                 >
                     {/* Container for "Signin" and "Signup" buttons, displayed side by side */}
-                    <Link href="/landing">
+                    <Link href="/signin">
                         {/* Link navigates to the signin (login) page */}
                         <button style={buttonStyle}>Signin</button>
                         {/* "Signin" button, renamed from Login */}
