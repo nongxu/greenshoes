@@ -8,16 +8,20 @@ const handle = app.getRequestHandler();
 
 const server = express();
 
-//db(); // Establish database connection
+// db(); // Establishing a database connection
 
 server.use(express.json());
 
-// Define API routes here
+// Mount the route for the product list
+const productsRouter = require('./routes/products');
+server.use('/api/products', productsRouter);
+
+// Example API route (other interfaces can be retained)
 server.get('/api/example', (req, res) => {
     res.json({ message: 'Hello from the API!' });
 });
 
-// Handle Next.js pages
+// Handling Next.js page requests
 server.all('*', (req, res) => {
     return handle(req, res);
 });
@@ -29,11 +33,11 @@ app.prepare().then(() => {
     });
 });
 
+// The following is another way to start the server, you can enable the database connection as needed before starting
 // const startServer = async () => {
 //     await db.connectDB();
 //     server.listen(3000, () => {
 //         console.log('Server running on http://localhost:3000');
 //     });
 // }
-
 // startServer();
