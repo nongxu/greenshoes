@@ -11,6 +11,7 @@ const products = [
 const ProductListing = () => {
     return (
         <Layout>
+{/* Layout component for consistent page layout */}
             {/* Layout component for consistent page layout */}
             <div style={{ padding: '20px' }}>
                 {/*  Outer container with 20px padding */}
@@ -53,7 +54,7 @@ const ProductListing = () => {
                                 {/* Product name */}
                                 <p>{product.price}</p>
                                 {/* Product price */}
-                                <Link href={`/product?id=${product.id}`}>
+                                <Link href={`/product/${product.id}`}>
                                     {/* Link to the product detail page */}
                                     <span
                                         style={{

@@ -1,18 +1,24 @@
-import Layout from '../components/Layout';
+import Layout from '../../components/Layout';
 import React from 'react';
 
-const Product = () => {
+const products = [
+    { id: 1, name: 'Green Sneakers', price: '$50', image: '/images/product1.jpg' },
+    { id: 2, name: 'Blue Running Shoes', price: '$70', image: '/images/product2.jpg' },
+    { id: 3, name: 'Red High Heels', price: '$90', image: '/images/product3.jpg' },
+];
+
+const Product = ({ product }) => {
     return (
         <Layout>
             <div className="container">
                 <div className="product-page">
                     <div className="product-header">
-                        <h1>Eco-Friendly Green Shoes</h1>
-                        <p className="price">$20</p>
+                        <h1>{product.name}</h1>
+                        <p className="price">{product.price}</p>
                     </div>
                     <div className="product-details">
                         <div className="product-image">
-                            <img src="/images/green-shoe.jpg" alt="Eco-friendly Green Shoe" />
+                            <img src={product.image} alt={product.name} />
                         </div>
                         <div className="product-info">
                             <div className="product-size">
@@ -34,7 +40,7 @@ const Product = () => {
                             </div>
                             <button className="add-to-cart">Add To Cart</button>
                             <p className="description">
-                                Discover our eco-conscious green shoes, crafted using sustainable materials to help protect our planet.
+                                Discover our eco-friendly {product.name.toLowerCase()}, crafted using sustainable materials to help protect our planet.
                             </p>
                         </div>
                     </div>
@@ -52,5 +58,17 @@ const Product = () => {
         </Layout>
     );
 };
+
+export async function getStaticPaths() {
+    const paths = products.map(prod => ({
+        params: { id: prod.id.toString() },
+    }));
+    return { paths, fallback: false };
+}
+
+export async function getStaticProps({ params }) {
+    const product = products.find(prod => prod.id.toString() === params.id);
+    return { props: { product } };
+}
 
 export default Product;
