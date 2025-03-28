@@ -11,6 +11,7 @@ const Layout = ({ children }) => {
                     <nav className={styles.siteNav}>
                         <Link href="/">Home</Link>
                         <Link href="/products-listing">Product</Link>
+                        <Link href="/orders">Orders</Link>
                         <Link href="/cart">Cart</Link>
                     </nav>
                 </div>
