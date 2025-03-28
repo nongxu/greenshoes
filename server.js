@@ -1,6 +1,6 @@
 const express = require('express');
 const next = require('next');
-const db = require('./db/connection');
+// const db = require('./db/connection');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -8,7 +8,7 @@ const handle = app.getRequestHandler();
 
 const server = express();
 
-db(); // Establish database connection
+//db(); // Establish database connection
 
 server.use(express.json());
 
@@ -29,11 +29,11 @@ app.prepare().then(() => {
     });
 });
 
-const startServer = async () => {
-    await db.connectDB();
-    server.listen(3000, () => {
-        console.log('Server running on http://localhost:3000');
-    });
-}
+// const startServer = async () => {
+//     await db.connectDB();
+//     server.listen(3000, () => {
+//         console.log('Server running on http://localhost:3000');
+//     });
+// }
 
-startServer();
+// startServer();
