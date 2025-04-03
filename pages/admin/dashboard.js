@@ -193,7 +193,7 @@ const inputStyle = {
 
 const submitButtonStyle = {
     padding: '10px 16px',
-    backgroundColor: '#0070f3',
+    backgroundColor: '#28a745',
     color: '#fff',
     border: 'none',
     borderRadius: '4px',
@@ -212,7 +212,7 @@ const addButtonStyle = {
 const removeButtonStyle = {
     marginLeft: '8px',
     padding: '8px 16px',
-    backgroundColor: '#dc3545',
+    backgroundColor: '#28a745',
     color: '#fff',
     border: 'none',
     borderRadius: '4px',
