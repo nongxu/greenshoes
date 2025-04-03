@@ -5,55 +5,109 @@ import Layout from '../components/Layout';
 const Home = () => {
     return (
         <Layout>
-            {/* Layout component provides a consistent page structure */}
             <div style={{ textAlign: 'center', padding: '100px 0' }}>
-                {/* Main container with centered text and vertical padding */}
                 <h1>Welcome to GreenShoes</h1>
-                {/* Main title of the homepage */}
                 <p>Your one-stop shop for all things footwear!</p>
-                {/* Tagline for the website */}
+
+                {/* Shop Now Button */}
                 <div style={{ marginTop: '50px' }}>
-                    {/* Container for the "Shop Now" button */}
                     <Link href="/products-listing">
-                        {/* Link navigates to the products listing page */}
-                        <button style={buttonStyle}>Shop Now</button>
-                        {/* "Shop Now" button styled with buttonStyle */}
+                        <button style={shopNowButtonStyle}>Shop Now</button>
                     </Link>
                 </div>
-                <div
-                    style={{
-                        marginTop: '20px',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        gap: '20px'
-                    }}
-                >
-                    {/* Container for "Signin" and "Signup" buttons, displayed side by side */}
+
+                {/* Signin/Signup Buttons */}
+                <div style={{
+                    marginTop: '20px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '20px'
+                }}>
                     <Link href="/signin">
-                        {/* Link navigates to the signin (login) page */}
                         <button style={buttonStyle}>Signin</button>
-                        {/* "Signin" button, renamed from Login */}
                     </Link>
                     <Link href="/signup">
-                        {/* Link navigates to the signup page */}
                         <button style={buttonStyle}>Signup</button>
-                        {/* "Signup" button added */}
                     </Link>
+                </div>
+
+                {/* Product Showcase Section */}
+                <div style={{
+                    marginTop: '80px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: '40px',
+                    flexWrap: 'wrap'
+                }}>
+                    {products.map((product, index) => (
+                        <div key={index} style={productCardStyle}>
+                            <img
+                                src={product.image}
+                                alt={product.name}
+                                style={{ width: '100%', borderRadius: '8px' }}
+                            />
+                            <h3>{product.name}</h3>
+                            <p>${product.price}</p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </Layout>
     );
 };
 
-// Button styling object for consistent styling of all buttons
-const buttonStyle = {
-    padding: '14px 28px',           // Padding inside the button
-    fontSize: '16px',               // Font size of the button text
-    backgroundColor: '#28a745',     // Green background color
-    color: '#fff',                  // White text color
-    border: 'none',                 // No border
-    borderRadius: '8px',            // Rounded corners with an 8px radius
-    cursor: 'pointer'               // Pointer cursor on hover
+// Shop Now button with more emphasis
+const shopNowButtonStyle = {
+    padding: '16px 36px',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    background: 'linear-gradient(90deg, #28a745, #218838)',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
+    cursor: 'pointer',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 };
+
+// Normal button style for signin/signup
+const buttonStyle = {
+    padding: '14px 28px',
+    fontSize: '16px',
+    backgroundColor: '#28a745',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer'
+};
+
+// Product card style
+const productCardStyle = {
+    width: '200px',
+    padding: '16px',
+    backgroundColor: '#f8f9fa',
+    borderRadius: '12px',
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    textAlign: 'center'
+};
+
+// Sample product data
+const products = [
+    {
+        name: 'Classic Sneakers',
+        price: '59.99',
+        image: '/images/shoe1.jpg'
+    },
+    {
+        name: 'Running Shoes',
+        price: '79.99',
+        image: '/images/shoe2.jpg'
+    },
+    {
+        name: 'Stylish Loafers',
+        price: '69.99',
+        image: '/images/shoe3.jpg'
+    }
+];
 
 export default Home;

@@ -44,6 +44,8 @@ greenshoes
    ```
    npm install
    ```
+   npm install js-cookie
+
 
 3. Set up the environment variables:
    - Create a `.env` file in the root directory and add your PostgreSQL connection string and any other necessary environment variables.
