@@ -1,6 +1,7 @@
 import Layout from '../components/Layout';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import { signIn } from 'next-auth/react';
 
 const Landing = () => {
     const router = useRouter();
@@ -10,6 +11,7 @@ const Landing = () => {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('user'); // 'user' or 'admin'
 
+<<<<<<< Updated upstream
     // Handle form submission
     const handleLogin = (e) => {
         e.preventDefault();
@@ -19,6 +21,27 @@ const Landing = () => {
             router.push('/admin/dashboard'); // Redirect admin to admin panel
         } else {
             router.push('/user/dashboard'); // Redirect normal user to user dashboard
+=======
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        // call next-auth signIn function with credentials
+        const res = await signIn('credentials', {
+            redirect: false,
+            email,
+            password,
+            role
+        });
+
+        if (res.error) {
+            setError('Invalid credentials');
+        } else {
+            // if login is successful, redirect to the dashboard based on role
+            if (role === 'admin') {
+                router.push('/admin/dashboard');
+            } else {
+                router.push('/products-listing');
+            }
+>>>>>>> Stashed changes
         }
     };
 
