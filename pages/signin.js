@@ -11,17 +11,6 @@ const Landing = () => {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('user'); // 'user' or 'admin'
 
-<<<<<<< Updated upstream
-    // Handle form submission
-    const handleLogin = (e) => {
-        e.preventDefault();
-
-        // (To be replaced with real login logic using API)
-        if (role === 'admin') {
-            router.push('/admin/dashboard'); // Redirect admin to admin panel
-        } else {
-            router.push('/user/dashboard'); // Redirect normal user to user dashboard
-=======
     const handleLogin = async (e) => {
         e.preventDefault();
         // call next-auth signIn function with credentials
@@ -41,7 +30,6 @@ const Landing = () => {
             } else {
                 router.push('/products-listing');
             }
->>>>>>> Stashed changes
         }
     };
 
