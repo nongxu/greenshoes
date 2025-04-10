@@ -1,6 +1,7 @@
+require('dotenv').config(); 
 const express = require('express');
 const next = require('next');
-// const db = require('./db/connection');
+const {connectDB} = require('./db/connection');
 
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
@@ -8,7 +9,7 @@ const handle = app.getRequestHandler();
 
 const server = express();
 
-// db(); // Establishing a database connection
+connectDB(); // Establishing a database connection
 
 server.use(express.json());
 

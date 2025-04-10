@@ -46,11 +46,31 @@ greenshoes
    ```
    npm install js-cookie
 
-
 3. Set up the environment variables:
    - Create a `.env` file in the root directory and add your PostgreSQL connection string and any other necessary environment variables.
 
+### Setting Up the Database
+
+1. **Execute the Database Schema:**
+
+   Open your terminal, navigate to the project root, and run the following command to create the necessary tables in your PostgreSQL database. Replace `<your_db_username>` and `<your_db_name>` with your actual database credentials. For example, if your username is `postgres` and your database is `greenshoes`:
+
+   ```
+   psql -U postgres -d greenshoes -f db/schema.sql
+   ```
+
+2. **Seed the Database with Dummy Data:**
+
+   Once the schema is in place, run the seed script to populate the database with dummy data:
+
+   ```
+   node seed.js
+   ```
+   
+   This script will insert dummy users and products using Faker.
+
 ### Running the Application
+
 1. Start the Express server:
    ```
    node server.js
