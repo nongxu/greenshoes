@@ -10,9 +10,12 @@ const Landing = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('user'); // 'user' or 'admin'
+    const [error, setError] = useState(null); //  Adding error status
 
     const handleLogin = async (e) => {
         e.preventDefault();
+        setError(null); // Clear previous errors
+
         // call next-auth signIn function with credentials
         const res = await signIn('credentials', {
             redirect: false,
@@ -27,9 +30,12 @@ const Landing = () => {
             // if login is successful, redirect to the dashboard based on role
             if (role === 'admin') {
                 router.push('/admin/dashboard');
+            } else if (role === 'user') {
+                router.push('/user/dashboard');
             } else {
-                router.push('/products-listing');
+                router.push('/'); // fallback
             }
+            
         }
     };
 
@@ -39,6 +45,13 @@ const Landing = () => {
             <div style={{ maxWidth: '400px', margin: '100px auto' }}>
                 <h2>Login</h2>
                 <form onSubmit={handleLogin}>
+                    {/* Error message */}
+                    {error && (
+                        <p style={{ color: 'red', marginBottom: '15px' }}>
+                            {error}
+                        </p>
+                    )}
+
                     {/* Email input field */}
                     <div style={{ marginBottom: '15px' }}>
                         <label>Email:</label>
