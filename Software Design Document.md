@@ -116,15 +116,15 @@ The database schema (see `db/schema.sql`) includes the following major tables:
 
 Seeding is performed with `seed.js` to generate dummy entries for users and products for testing and demonstration.
 
-![db schema](image.png)
+![db schema](./images/image.png)
 ---
 
 #### 4.2.5 Screenshots
 
-![Homepage](image-1.png)
-![Product listing](image-2.png)
-![signin](image-3.png)
-![signup](image-4.png)
+![Homepage](./images/image-1.png)
+![Product listing](./images/image-2.png)
+![signin](./images/image-3.png)
+![signup](./images/image-4.png)
 
 ---
 
