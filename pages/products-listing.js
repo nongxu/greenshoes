@@ -1,22 +1,11 @@
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
-const products = [
-    { id: 1, name: 'Green Sneakers', price: '$50', image: '/images/product1.jpg' },
-    { id: 2, name: 'Blue Running Shoes', price: '$70', image: '/images/product2.jpg' },
-    { id: 3, name: 'Red High Heels', price: '$90', image: '/images/product3.jpg' },
-    // More product data can be added
-];
-
-const ProductListing = () => {
+const ProductListing = ({ products }) => {
     return (
         <Layout>
-{/* Layout component for consistent page layout */}
-            {/* Layout component for consistent page layout */}
             <div style={{ padding: '20px' }}>
-                {/*  Outer container with 20px padding */}
                 <h1 style={{ textAlign: 'center' }}>Product Listing</h1>
-                {/* Page title centered as "Product Listing" */}
                 <div
                     style={{
                         display: 'grid',
@@ -25,7 +14,6 @@ const ProductListing = () => {
                         marginTop: '20px'
                     }}
                 >
-                    {/* Using CSS Grid layout with auto-fill, each grid cell has a minimum width of 250px, with a 20px gap */}
                     {products.map(product => (
                         <div
                             key={product.id}
@@ -37,7 +25,6 @@ const ProductListing = () => {
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                             }}
                         >
-                            {/* Each product card with border, rounded corners, hidden overflow, centered text, and a subtle shadow */}
                             <img
                                 src={product.image}
                                 alt={product.name}
@@ -47,15 +34,10 @@ const ProductListing = () => {
                                     objectFit: 'cover'
                                 }}
                             />
-                            {/* Product image with 100% width, fixed height of 200px, and cover object-fit */}
                             <div style={{ padding: '10px' }}>
-                                {/* Container for product information with 10px padding */}
                                 <h3>{product.name}</h3>
-                                {/* Product name */}
-                                <p>{product.price}</p>
-                                {/* Product price */}
+                                <p>${Number(product.price).toFixed(2)}</p>
                                 <Link href={`/product/${product.id}`}>
-                                    {/* Link to the product detail page */}
                                     <span
                                         style={{
                                             display: 'inline-block',
@@ -69,7 +51,6 @@ const ProductListing = () => {
                                         }}
                                     >
                                         View Details
-                                        {/* "View Details" button styled as a clickable span */}
                                     </span>
                                 </Link>
                             </div>
@@ -81,5 +62,27 @@ const ProductListing = () => {
     );
 };
 
+export async function getServerSideProps() {
+    const res = await fetch('http://localhost:3000/api/products');
+    const products = await res.json();
+
+    const fallbackImages = [
+        '/images/product1.jpg',
+        '/images/product2.jpg',
+        '/images/product3.jpg',
+        '/images/product4.jpg',
+    ];
+
+    // 为每个产品临时添加一张图片（随机）
+    products.forEach((product) => {
+        product.image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+    });
+
+    return {
+        props: {
+            products,
+        },
+    };
+}
 
 export default ProductListing;
