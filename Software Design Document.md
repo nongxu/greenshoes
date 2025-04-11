@@ -8,11 +8,15 @@ Greenshoes is a modern web application built to showcase high-quality footwear. 
 
 ## 2. Revision Table
 
-| Version | Date        | Author      | Changes/Comments                   |
-|---------|-------------|-------------|------------------------------------|
-| 1.0     | 2025-04-10  | Your Name   | Initial version of the project.    |
-| 1.1     | 2025-04-15  | Your Name   | Added NextAuth-based authentication, seeded dummy data, and updated database schema. |
-| 1.2     | 2025-04-20  | Your Name   | Refined component structure, improved UI styles, and updated documentation. |
+| Version | Date        | Changes/Comments                                                                                     |
+|---------|-------------|------------------------------------------------------------------------------------------------------|
+| 1.0     | 2025-02-21  | Initial version of the project.                                                                     |
+| 1.1     | 2025-02-28  | Completed research on critical architectural components and finalized the architecture document.     |
+| 1.2     | 2025-03-21  | Deployed the main architecture and created the web diagram to visualize system interactions.         |
+| 1.3     | 2025-03-28  | Implemented landing pages, the home page, and the product page. Researched and integrated NextAuth. |
+| 1.4     | 2025-04-04  | Completed database schema refinement, critical design document updates, and map routing features.    |
+| 1.5     | 2025-04-11  | Developed and tested APIs, refined critical design document (CDD), SDD, and ensured database alignment. |
+
 
 ---
 
@@ -23,42 +27,10 @@ Greenshoes follows a multi-tier architecture:
 - **Backend:** Implemented using Express.js to serve additional API endpoints (e.g., for products).
 - **Authentication:** Managed via NextAuth.js with a credentials provider.
 - **Database:** PostgreSQL stores users, admins, products, orders, and order items.
-- **Seed & Schema:** SQL scripts and a seed script (using Faker) support rapid development and testing.
 
 ---
-
 ## 4. Explanation of Each Component
-
-### 4.1 Next.js Client
-- **Pages:**  
-  - `index.js` – Homepage showcasing features and products.
-  - `products-listing.js` – Lists all products with links to detailed product pages.
-  - `signin.js` – Handles user login via NextAuth.
-- **Components:**  
-  - `Layout.js` – Provides a consistent UI layout and theming across pages.
-- **Styles:**  
-  - Global CSS styles and modules that define the visual appearance of components.
-
-### 4.2 Express Backend
-- **server.js:**  
-  - Integrates Express with Next.js, creates API endpoints (e.g., `/api/products`), and initializes the PostgreSQL database connection.
-- **Routes:**  
-  - Custom routes (stored in the `/routes` directory) that allow RESTful interactions with product data.
-
-### 4.3 Authentication (NextAuth.js)
-- Configured in `pages/api/auth/[...nextauth].js`, it uses a credentials provider to verify user logins and manage session state via JSON Web Tokens (JWT).
-
-### 4.4 Database
-- **Connection:**  
-  - `db/connection.js` sets up a PostgreSQL connection using the pg Pool.
-- **Schema:**  
-  - `db/schema.sql` defines tables for users, admins, products, orders, order items, and user order history.
-- **Seeding:**  
-  - `seed.js` uses Faker.js to populate dummy data for testing.
-
----
-
-## 5. Component Selection Criteria (SBOM)
+### 4.1 Component Selection Criteria (SBOM)
 
 An SBOM (Software Bill of Materials) is maintained for the project dependencies:
 - **Frontend Packages:**  
@@ -74,36 +46,13 @@ An SBOM (Software Bill of Materials) is maintained for the project dependencies:
 - **Development Tools:**  
   - `nodemon` – Auto-restarts the server during development.
   - `@faker-js/faker` – Generates dummy data for seeding the database.
-
 ---
+### 4.2 Designs
 
-## 6. Designs
+#### 4.2.1 Packages (Dependencies)
+Refer to the `package.json` file for a full list of dependencies. Key packages include Next.js, Express, pg, NextAuth, and Faker.
 
-### 6.1 UI/UX Designs
-- **Screen Layouts:**  
-  - A clean, grid‑based design is used on the product listing page.
-  - Responsive design principles are applied for mobile and desktop.
-- **Style Guides:**  
-  - A consistent color palette (greens for eco‑friendly, blue for call‑to‑action) is used across the application.
-  - Button and input styling is standardized via component and global CSS.
-
-### 6.2 Database Design
-- **Tables:**  
-  - **Users:** Stores user details, authentication data, and order history.
-  - **Admins:** Contains administrative login info.
-  - **Products:** Holds product information like name, price, description, stock quantity, and category.
-  - **Orders & Order Items:** Capture details of purchases including individual items ordered.
-- **Relationships:**  
-  - Foreign key constraints ensure data integrity between orders, order items, and user order history.
-
----
-
-## 7. Packages, Classes, and Structures
-
-### 7.1 Packages (Dependencies)
-Refer to the `package.json` file for a full list of dependencies. Key packages include Next.js, Express, PostgreSQL (pg), NextAuth, and Faker.
-
-### 7.2 Main Classes / Structures
+#### 4.2.2 Main Classes
 - **Express Server:**  
   - Bootstrapped in `server.js`, it combines Express middleware with Next.js request handling.
 - **Database Pool:**  
@@ -111,9 +60,49 @@ Refer to the `package.json` file for a full list of dependencies. Key packages i
 - **Authentication Handlers:**  
   - Configurations in `[...nextauth].js` specify credential authorization and session management.
 
+#### 4.2.3 Structures
+```
+greenshoes/
+├── components/                     
+│   └── Layout.js                   
+│
+├── db/                            
+│   ├── connection.js               
+│   └── schema.sql                  
+│
+├── pages/                          
+│   ├── admin/                     
+│   │   └── dashboard.js            
+│   │
+│   ├── api/                       
+│   │   └── auth/                   
+│   │       └── [...nextauth].js   
+│   │
+│   ├── user/                       
+│   │   └── dashboard.js            
+│   │
+│   ├── products-listing.js        
+│   ├── signin.js                   
+│   ├── index.js                    # Homepage
+│   └── _app.js                     
+│
+├── public/                         
+│   └── favicon.ico                 
+│
+├── routes/                         
+│   └── products.js                
+│
+├── styles/                        
+│   ├── globals.css                        
+│
+├── .env                           
+├── package.json                   
+├── README.md                      
+├── seed.js                                      
+└── server.js  
+```
 ---
-
-## 8. Database Design
+#### 4.2.4 Database Design
 
 The database schema (see `db/schema.sql`) includes the following major tables:
 - **users:**  
@@ -127,26 +116,25 @@ The database schema (see `db/schema.sql`) includes the following major tables:
 
 Seeding is performed with `seed.js` to generate dummy entries for users and products for testing and demonstration.
 
+![db schema](image.png)
 ---
 
-## 9. Screenshots
+#### 4.2.5 Screenshots
 
-*Note: Add screenshots here as images generated from your application running on http://localhost:3000.*
-
-![Homepage](./public/screenshots/homepage.png)
-![Product Listing](./public/screenshots/products-listing.png)
-![Signin Page](./public/screenshots/signin.png)
+![Homepage](image-1.png)
+![Product listing](image-2.png)
+![signin](image-3.png)
+![signup](image-4.png)
 
 ---
 
-## 10. Installation Notes
+## 6. Installation Notes
 
 1. **Clone the Repository and Install Dependencies:**
    ```
-   git clone <repository-url>
+   git clone https://github.com/yangboxin/greenshoes
    cd greenshoes
    npm install
-   npm install js-cookie
    ```
 
 2. **Set Up Environment Variables:**
@@ -160,6 +148,7 @@ Seeding is performed with `seed.js` to generate dummy entries for users and prod
      ```
 
 3. **Set Up the Database:**
+   - **Make sure posgresql is installed on your computer**
    - **Execute the Database Schema:**  
      From the project root, run:
      ```
@@ -175,21 +164,16 @@ Seeding is performed with `seed.js` to generate dummy entries for users and prod
      ```
      node server.js
      ```
-   - **Next.js Development Server:**  
-     ```
-     npm run dev
-     ```
 
 5. **Access the Application:**
    - Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 ---
 
-## 11. Final Remarks
+## 6. Final Remarks
 
 Greenshoes is designed to be a scalable, full‑stack application demonstrating modern web technologies. The architecture separates concerns between the frontend (Next.js), backend (Express), and data management (PostgreSQL). With built‑in authentication via NextAuth and a dynamic product experience, the project serves as both a robust learning exercise and an extendable ecommerce platform.
 
-Contributions and enhancements are welcome. Please refer to the Contributing section in the README for guidelines.
 
 ---
 

@@ -76,12 +76,7 @@ greenshoes
    node server.js
    ```
 
-2. Start the Next.js application:
-   ```
-   npm run dev
-   ```
-
-3. Open your browser and navigate to `http://localhost:3000` to view the application.
+2. Open your browser and navigate to `http://localhost:3000` to view the application.
 
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request for any enhancements or bug fixes.
