@@ -123,9 +123,15 @@ Seeding is performed with `seed.js` to generate dummy entries for users and prod
 
 ![Homepage](./images/image-1.png)
 ![Product listing](./images/image-2.png)
+![product](./images/image-5.png)
+![cart](./images/image-6.png)
+![checkout](./images/image-7.png)
 ![signin](./images/image-3.png)
 ![signup](./images/image-4.png)
-
+![order](./images/image-8.png)
+![user dash](./images/image-10.png)
+![address management](./images/image-9.png)
+![admin dash](./images/image-11.png)
 ---
 
 ## 6. Installation Notes
