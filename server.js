@@ -26,10 +26,8 @@ server.use('/api', signinRouter);
 const addressesRouter = require('./api/addresses_api');
 server.use('/api/addresses', addressesRouter);
 
-// Example API route
-server.get('/api/example', (req, res) => {
-    res.json({ message: 'Hello from the API!' });
-});
+const ordersRouter = require('./api/orders_api');
+server.use('/api/orders', ordersRouter);
 
 // Handle all other routes with Next.js
 server.all('*', (req, res) => {

@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:13-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: greenshoes
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "3000:3000"
+    environment:
+      # adjust to match whatever your server code expects:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: greenshoes
+      # or if your code uses a single connection string:
+      # DATABASE_URL: postgres://postgres:postgres@db:5432/greenshoes
+    # if you want to pick up code changes without rebuilding,
+    # uncomment the bind mount below (dev only)
+    # volumes:
+    #   - .:/app
+
+volumes:
+  db_data:
