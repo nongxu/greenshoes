@@ -17,10 +17,17 @@ server.use(express.json());
 const productsRouter = require('./routes/products');
 server.use('/api/products', productsRouter);
 
-// Example API route (other interfaces can be retained)
-server.get('/api/example', (req, res) => {
-    res.json({ message: 'Hello from the API!' });
-});
+const signupRouter = require('./api/signup_api');
+server.use('/api', signupRouter);
+
+const signinRouter = require('./api/signin_api');
+server.use('/api', signinRouter);
+
+const addressesRouter = require('./api/addresses_api');
+server.use('/api/addresses', addressesRouter);
+
+const ordersRouter = require('./api/orders_api');
+server.use('/api/orders', ordersRouter);
 
 // Handling Next.js page requests
 server.all('*', (req, res) => {

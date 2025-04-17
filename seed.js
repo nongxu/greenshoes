@@ -25,7 +25,8 @@ async function seedUsers(num = 10) {
         // For testing purposes we store plain text; in production, hash your password.
         const password_hash = faker.internet.password();
         const full_name = faker.person.fullName(); // new API
-        const phone = faker.phone.number('(###) ###-####');
+        // const phone = faker.phone.number('(###) ###-####');
+        const phone = faker.phone.number({ style: 'national' });
         const address = faker.location.streetAddress(); // new API
 
         try {
