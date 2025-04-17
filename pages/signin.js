@@ -1,58 +1,47 @@
 import Layout from '../components/Layout';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { signIn } from 'next-auth/react';
 
 const Landing = () => {
     const router = useRouter();
-
-    // Form state: email, password, and user role
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState('user'); // 'user' or 'admin'
-    const [error, setError] = useState(null); //  Adding error status
+    const [role, setRole] = useState('user');
+    const [error, setError] = useState(null);
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setError(null); // Clear previous errors
+        setError(null);
 
-        // call next-auth signIn function with credentials
-        const res = await signIn('credentials', {
-            redirect: false,
-            email,
-            password,
-            role
+        const res = await fetch('/api/signin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, role })
         });
 
-        if (res.error) {
-            setError('Invalid credentials');
+        const data = await res.json();
+
+        if (!res.ok) {
+            setError(data.message || 'Login failed');
         } else {
-            // if login is successful, redirect to the dashboard based on role
+            // 登录成功后跳转
             if (role === 'admin') {
                 router.push('/admin/dashboard');
-            } else if (role === 'user') {
-                router.push('/user/dashboard');
             } else {
-                router.push('/'); // fallback
+                router.push('/user/dashboard');
             }
-            
         }
     };
 
     return (
         <Layout>
-            {/* Login form container */}
             <div style={{ maxWidth: '400px', margin: '100px auto' }}>
                 <h2>Login</h2>
                 <form onSubmit={handleLogin}>
-                    {/* Error message */}
                     {error && (
-                        <p style={{ color: 'red', marginBottom: '15px' }}>
-                            {error}
-                        </p>
+                        <p style={{ color: 'red', marginBottom: '15px' }}>{error}</p>
                     )}
 
-                    {/* Email input field */}
                     <div style={{ marginBottom: '15px' }}>
                         <label>Email:</label>
                         <input 
@@ -64,7 +53,6 @@ const Landing = () => {
                         />
                     </div>
 
-                    {/* Password input field */}
                     <div style={{ marginBottom: '15px' }}>
                         <label>Password:</label>
                         <input 
@@ -76,7 +64,6 @@ const Landing = () => {
                         />
                     </div>
 
-                    {/* Role selection dropdown */}
                     <div style={{ marginBottom: '15px' }}>
                         <label>Role:</label>
                         <select 
@@ -89,7 +76,6 @@ const Landing = () => {
                         </select>
                     </div>
 
-                    {/* Submit button */}
                     <button type="submit" style={buttonStyle}>Login</button>
                 </form>
             </div>
@@ -97,7 +83,6 @@ const Landing = () => {
     );
 };
 
-// Common input styling
 const inputStyle = {
     width: '100%',
     padding: '8px',
@@ -105,7 +90,6 @@ const inputStyle = {
     boxSizing: 'border-box'
 };
 
-// Login button styling
 const buttonStyle = {
     width: '100%',
     padding: '10px',
