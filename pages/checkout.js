@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
+import Cookies from "js-cookie";
 
 export default function Checkout() {
   // Store user input for checkout
@@ -14,32 +15,35 @@ export default function Checkout() {
 
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState([]);
-
-  // Example cart items (replace with real source if needed)
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: "Green Sneakers", price: 59.99, quantity: 1 },
-    { id: 2, name: "Eco T-Shirt", price: 29.99, quantity: 2 }
-  ]);
-
+  const [cartItems, setCartItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [successMessage, setSuccessMessage] = useState(""); // Display order ID
 
-  // Fetch saved addresses on component mount
+  // Load cart items from cookie (using Cookies from cart.js)
   useEffect(() => {
-    fetch("/api/addresses")
-      .then(res => res.json())
-      .then(data => setSavedAddresses(data))
-      .catch(err => console.error("Failed to fetch addresses:", err));
+    const cookieCart = Cookies.get("cart");
+    if (cookieCart) {
+      try {
+        setCartItems(JSON.parse(cookieCart));
+      } catch (err) {
+        console.error("Cart parse error:", err);
+      }
+    }
   }, []);
 
   // Calculate total cart value
   useEffect(() => {
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
-    );
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     setTotalAmount(total);
   }, [cartItems]);
+
+  // Read current user's saved address from the DB through API call
+  useEffect(() => {
+    fetch("/api/user/addresses")
+      .then((res) => res.json())
+      .then((data) => setSavedAddresses(data))
+      .catch((err) => console.error("Failed to fetch addresses:", err));
+  }, []);
 
   // Sync billing address if checkbox is checked
   useEffect(() => {
@@ -57,7 +61,7 @@ export default function Checkout() {
     setUserData({ ...userData, [name]: value });
   };
 
-  // Handle checkout submit
+  // Handle checkout submit: submits user's order, stores it in the DB, and returns a unique order ID.
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -69,7 +73,7 @@ export default function Checkout() {
       cardNumber: userData.cardNumber,
       expiration: userData.expiration,
       cvc: userData.cvc,
-      items: cartItems.map(item => ({
+      items: cartItems.map((item) => ({
         id: item.id,
         quantity: item.quantity
       }))
@@ -86,6 +90,9 @@ export default function Checkout() {
 
       if (data.success) {
         setSuccessMessage(`Your order has been placed! Order ID: ${data.orderId}`);
+        // Optionally clear the cart cookie once the order is complete
+        Cookies.remove("cart");
+        setCartItems([]);
       } else {
         alert("Checkout failed: " + (data.message || "Unknown error"));
       }
@@ -102,14 +109,16 @@ export default function Checkout() {
 
         {/* Success message if order confirmed */}
         {successMessage && (
-          <div style={{
-            backgroundColor: "#d4edda",
-            color: "#155724",
-            padding: "12px",
-            borderRadius: "6px",
-            marginBottom: "20px",
-            textAlign: "center"
-          }}>
+          <div
+            style={{
+              backgroundColor: "#d4edda",
+              color: "#155724",
+              padding: "12px",
+              borderRadius: "6px",
+              marginBottom: "20px",
+              textAlign: "center"
+            }}
+          >
             {successMessage}
           </div>
         )}
@@ -118,10 +127,12 @@ export default function Checkout() {
         <div style={{ marginBottom: "30px" }}>
           <h3 style={{ marginBottom: "10px", fontSize: "18px" }}>Your Items:</h3>
           <ul style={{ listStyle: "none", padding: 0 }}>
-            {cartItems.map(item => (
+            {cartItems.map((item) => (
               <li key={item.id} style={{ marginBottom: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span>{item.name} (x{item.quantity})</span>
+                  <span>
+                    {item.name} (x{item.quantity})
+                  </span>
                   <span>${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               </li>
@@ -142,7 +153,7 @@ export default function Checkout() {
                 onChange={(e) => {
                   const selected = e.target.value;
                   if (selected) {
-                    setUserData(prev => ({
+                    setUserData((prev) => ({
                       ...prev,
                       address: selected,
                       billingAddress: billingSameAsShipping ? selected : prev.billingAddress
@@ -154,7 +165,9 @@ export default function Checkout() {
               >
                 <option value="">-- Choose an address --</option>
                 {savedAddresses.map((addr, idx) => (
-                  <option key={idx} value={addr}>{addr}</option>
+                  <option key={idx} value={addr}>
+                    {addr}
+                  </option>
                 ))}
               </select>
             </div>
@@ -186,7 +199,9 @@ export default function Checkout() {
           </div>
 
           {/* Submit button */}
-          <button type="submit" style={buttonStyle}>Confirm Checkout</button>
+          <button type="submit" style={buttonStyle}>
+            Confirm Checkout
+          </button>
         </form>
       </div>
     </Layout>
@@ -217,12 +232,7 @@ function Checkbox({ checked, onChange, label }) {
   return (
     <div style={{ marginBottom: "16px" }}>
       <label style={{ fontWeight: "bold" }}>
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={onChange}
-          style={{ marginRight: "8px" }}
-        />
+        <input type="checkbox" checked={checked} onChange={onChange} style={{ marginRight: "8px" }} />
         {label}
       </label>
     </div>
