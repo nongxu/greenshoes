@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import Layout from '../components/Layout';
+import { pool } from '../db/connection';
 
-// Home component representing the homepage
-const Home = () => {
+const Home = ({ products }) => {
     return (
         <Layout>
             <div style={{ textAlign: 'center', padding: '100px 0' }}>
@@ -39,24 +39,27 @@ const Home = () => {
                     gap: '40px',
                     flexWrap: 'wrap'
                 }}>
-                    {products.map((product, index) => (
-                        <div key={index} style={productCardStyle}>
-                            <img
-                                src={product.image}
-                                alt={product.name}
-                                style={{ width: '100%', borderRadius: '8px' }}
-                            />
-                            <h3>{product.name}</h3>
-                            <p>${product.price}</p>
-                        </div>
-                    ))}
+                    {products && products.length > 0 ? (
+                        products.map((product) => (
+                            <div key={product.id} style={productCardStyle}>
+                                <img
+                                    src={product.image_url || '/images/default.jpg'}
+                                    alt={product.name}
+                                    style={{ width: '100%', borderRadius: '8px' }}
+                                />
+                                <h3>{product.name}</h3>
+                                <p>${product.price}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No products available</p>
+                    )}
                 </div>
             </div>
         </Layout>
     );
 };
 
-// Shop Now button with more emphasis
 const shopNowButtonStyle = {
     padding: '16px 36px',
     fontSize: '18px',
@@ -70,7 +73,6 @@ const shopNowButtonStyle = {
     transition: 'transform 0.2s ease, box-shadow 0.2s ease'
 };
 
-// Normal button style for signin/signup
 const buttonStyle = {
     padding: '14px 28px',
     fontSize: '16px',
@@ -81,7 +83,6 @@ const buttonStyle = {
     cursor: 'pointer'
 };
 
-// Product card style
 const productCardStyle = {
     width: '200px',
     padding: '16px',
@@ -91,23 +92,30 @@ const productCardStyle = {
     textAlign: 'center'
 };
 
-// Sample product data
-const products = [
-    {
-        name: 'Classic Sneakers',
-        price: '59.99',
-        image: '/images/shoe1.jpg'
-    },
-    {
-        name: 'Running Shoes',
-        price: '79.99',
-        image: '/images/shoe2.jpg'
-    },
-    {
-        name: 'Stylish Loafers',
-        price: '69.99',
-        image: '/images/shoe3.jpg'
+export async function getServerSideProps() {
+    try {
+        const query = `
+            SELECT 
+                id, 
+                name, 
+                price, 
+                (
+                    SELECT image_url 
+                    FROM product_images 
+                    WHERE product_id = products.id AND is_primary = true 
+                    LIMIT 1
+                ) as image_url 
+            FROM products 
+            ORDER BY RANDOM() 
+            LIMIT 3
+        `;
+        const client = await pool.connect();
+        const { rows: products } = await client.query(query);
+        return { props: { products } };
+    } catch (error) {
+        console.error('Error fetching products:', error);
+        return { props: { products: [] } };
     }
-];
+}
 
 export default Home;
