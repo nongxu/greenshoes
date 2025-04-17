@@ -1,3 +1,4 @@
+import React from 'react';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 
@@ -5,53 +6,54 @@ const ProductListing = ({ products }) => {
     return (
         <Layout>
             <div style={{ padding: '20px' }}>
-                <h1 style={{ textAlign: 'center' }}>Product Listing</h1>
+                <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Product List</h1>
                 <div
                     style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                        gap: '20px',
-                        marginTop: '20px'
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: '30px'
                     }}
                 >
                     {products.map(product => (
                         <div
                             key={product.id}
                             style={{
-                                border: '1px solid #ddd',
-                                borderRadius: '8px',
+                                backgroundColor: '#fff',
+                                borderRadius: '10px',
                                 overflow: 'hidden',
-                                textAlign: 'center',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                transition: 'transform 0.2s'
                             }}
+                            onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.03)')}
+                            onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
                         >
                             <img
                                 src={product.image}
                                 alt={product.name}
                                 style={{
                                     width: '100%',
-                                    height: '200px',
+                                    height: '250px',
                                     objectFit: 'cover'
                                 }}
                             />
-                            <div style={{ padding: '10px' }}>
-                                <h3>{product.name}</h3>
-                                <p>${Number(product.price).toFixed(2)}</p>
-                                <Link href={`/product/${product.id}`}>
-                                    <span
+                            <div style={{ padding: '20px' }}>
+                                <h3 style={{ margin: '0 0 15px 0' }}>{product.name}</h3>
+                                <p style={{ margin: '0 0 20px 0', fontWeight: 'bold' }}>
+                                    ${Number(product.price).toFixed(2)}
+                                </p>
+                                <Link legacyBehavior href={`/product/${product.id}`}>
+                                    <a
                                         style={{
                                             display: 'inline-block',
-                                            marginTop: '10px',
-                                            padding: '8px 16px',
+                                            padding: '10px 20px',
                                             backgroundColor: '#0070f3',
                                             color: '#fff',
-                                            borderRadius: '4px',
-                                            textDecoration: 'none',
-                                            cursor: 'pointer'
+                                            borderRadius: '5px',
+                                            textDecoration: 'none'
                                         }}
                                     >
                                         View Details
-                                    </span>
+                                    </a>
                                 </Link>
                             </div>
                         </div>
@@ -63,26 +65,28 @@ const ProductListing = ({ products }) => {
 };
 
 export async function getServerSideProps() {
-    const res = await fetch('http://localhost:3000/api/products');
-    const products = await res.json();
+    try {
+        // Adjust the API URL if needed. You can also use an environment variable.
+        const res = await fetch(`${process.env.API_URL || 'http://localhost:3000'}/api/products`);
+        if (!res.ok) {
+            throw new Error('Failed to fetch products');
+        }
+        const products = await res.json();
 
-    const fallbackImages = [
-        '/images/product1.jpg',
-        '/images/product2.jpg',
-        '/images/product3.jpg',
-        '/images/product4.jpg',
-    ];
+        // Assign a fallback image if needed
+        const fallbackImages = [
+            '/images/product1.jpg',
+        ];
+        const productsWithImages = products.map(product => ({
+            ...product,
+            image: product.image || fallbackImages[Math.floor(Math.random() * fallbackImages.length)]
+        }));
 
-    // 为每个产品临时添加一张图片（随机）
-    products.forEach((product) => {
-        product.image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
-    });
-
-    return {
-        props: {
-            products,
-        },
-    };
+        return { props: { products: productsWithImages } };
+    } catch (error) {
+        console.error(error);
+        return { props: { products: [] } };
+    }
 }
 
 export default ProductListing;

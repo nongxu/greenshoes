@@ -47,10 +47,42 @@ async function seedProducts(num = 10) {
     }
 }
 
+async function seedProductImages() {
+    const insertImageQuery = `
+        INSERT INTO product_images (product_id, image_url, is_primary)
+        VALUES ($1, $2, $3)
+        RETURNING id;
+    `;
+    // List of local image URLs (adjust the paths if necessary)
+    const localImages = [
+        '/images/image1.jpg',
+        '/images/image2.jpg',
+        '/images/image3.jpg',
+        '/images/image4.jpg',
+        '/images/image5.jpg'
+    ];
+
+    try {
+        const res = await pool.query(`SELECT id FROM products`);
+        const productIds = res.rows.map(row => row.id);
+
+        // For each product, insert one primary image
+        for (const product_id of productIds) {
+            const image_url = faker.helpers.arrayElement(localImages);
+            // Set is_primary to true so every product gets at least one image.
+            const imageRes = await pool.query(insertImageQuery, [product_id, image_url, true]);
+            console.log(`Inserted primary image with id: ${imageRes.rows[0].id} for product ${product_id}`);
+        }
+    } catch (err) {
+        console.error(`Error inserting product image: ${err.message}`);
+    }
+}
+
 async function seedData() {
     try {
         await seedUsers();
         await seedProducts();
+        await seedProductImages();
     } catch (err) {
         console.error(err);
     } finally {

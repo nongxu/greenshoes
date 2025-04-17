@@ -1,101 +1,84 @@
+/* Base container */
 .layoutContainer {
-    max-width: 1200px;
-    margin: 0 auto; 
-    padding: 0 20px;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .siteHeader {
-    background-color: #66bb6a;
-    padding: 20px 0;
-    border-bottom: 3px solid #4caf50;
+    background: linear-gradient(135deg, #66bb6a, #4caf50);
+    padding: 1.5rem 1rem; 
+    border-bottom: 0.1875rem solid #4caf50;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 8px 8px;
 }
 
+/* Header content */
 .headerContent {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    padding: 0 1rem;
 }
 
 .siteTitle {
-    font-size: 2.5rem;
+    font-size: 2.75rem;
     margin: 0;
     color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.siteNav a {
-    margin-left: 20px;
-    font-size: 1.1rem;
-    text-decoration: none;
-    color: #ffffff;
-}
-
-.siteNav a:hover {
-    text-decoration: underline;
-}
-
-.siteMain {
-    padding: 40px 0;
-    min-height: calc(100vh - 160px);
+.siteNav {
     display: flex;
-    flex-direction: column;
-    align-items: center; 
-}
-
-.siteFooter {
-    background-color: #66bb6a;
-    padding: 15px 0;
-    text-align: center;
-    color: #ffffff;
-    border-top: 3px solid #4caf50;
-}
-
-.layoutContainer {
-    max-width: 1200px;
-    margin: 0 auto; 
-    padding: 0 20px;
-}
-
-.siteHeader {
-    background-color: #66bb6a;
-    padding: 20px 0;
-    border-bottom: 3px solid #4caf50;
-}
-
-.headerContent {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
 }
 
-.siteTitle {
-    font-size: 2.5rem;
-    margin: 0;
-    color: #ffffff;
-}
-
 .siteNav a {
-    margin-left: 20px;
+    margin-left: 1rem;
     font-size: 1.1rem;
     text-decoration: none;
     color: #ffffff;
+    transition: color 0.3s ease;
 }
 
 .siteNav a:hover {
     text-decoration: underline;
+    color: #e0f2f1;
 }
 
+/* Main content area */
 .siteMain {
-    padding: 40px 0;
-    min-height: calc(100vh - 160px);
+    flex: 1;
+    padding: 2.5rem 1rem;
     display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
 }
 
 .siteFooter {
     background-color: #66bb6a;
-    padding: 15px 0;
+    padding: 1rem;
     text-align: center;
     color: #ffffff;
-    border-top: 3px solid #4caf50;
+    border-top: 0.1875rem solid #4caf50;
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .headerContent {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .siteNav {
+        margin-top: 1rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .siteNav a {
+        margin: 0 0.5rem;
+    }
 }

@@ -82,7 +82,7 @@ const Product = ({ product }) => {
     );
 };
 
-// 动态加载产品数据
+
 export async function getServerSideProps({ params }) {
     const res = await fetch(`http://localhost:3000/api/product/${params.id}`);
     if (!res.ok) {
@@ -91,14 +91,12 @@ export async function getServerSideProps({ params }) {
 
     const product = await res.json();
 
-    // 添加默认图片（以后可对接 product_images 表）
     const fallbackImages = [
-        '/images/product1.jpg',
-        '/images/product2.jpg',
-        '/images/product3.jpg',
-        '/images/product4.jpg',
+        '/images/product1.jpg'
     ];
-    product.image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+    if(!product.image){
+        product.image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+    }
 
     return {
         props: {
