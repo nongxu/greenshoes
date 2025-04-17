@@ -2,6 +2,18 @@ require('dotenv').config();
 const { pool } = require('./db/connection');
 const { faker } = require('@faker-js/faker');
 
+async function clearData() {
+    try {
+        await pool.query('DELETE FROM product_images');
+        await pool.query('DELETE FROM products');
+        await pool.query('DELETE FROM users');
+        console.log('Cleared all data from product_images, products, and users tables');
+    } catch (err) {
+        console.error(`Error clearing data: ${err.message}`);
+    }
+}
+
+
 async function seedUsers(num = 10) {
     const insertUser = `
         INSERT INTO users (email, password_hash, full_name, phone, address, created_at)
@@ -80,6 +92,7 @@ async function seedProductImages() {
 
 async function seedData() {
     try {
+        await clearData();
         await seedUsers();
         await seedProducts();
         await seedProductImages();
