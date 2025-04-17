@@ -3,28 +3,18 @@ import { addToCart } from '../../utils/cartUtils';
 import { useState } from 'react';
 import React from 'react';
 
-// Static list of products (for demo purposes)
-const products = [
-    { id: 1, name: 'Green Sneakers', price: '$50', image: '/images/product1.jpg' },
-    { id: 2, name: 'Blue Running Shoes', price: '$70', image: '/images/product2.jpg' },
-    { id: 3, name: 'Red High Heels', price: '$90', image: '/images/product3.jpg' },
-];
-
-// Product detail component (rendered per product)
 const Product = ({ product }) => {
-    const [quantity, setQuantity] = useState(1); // Quantity state
+    const [quantity, setQuantity] = useState(1);
 
-    // Add item to cart with selected quantity
     const handleAddToCart = () => {
-        const numericPrice = parseFloat(product.price.replace('$', ''));
         const productData = {
             id: product.id,
             name: product.name,
-            price: numericPrice,
+            price: product.price,
             image: product.image,
         };
 
-        addToCart(productData, quantity); // Call utility function to store in cookie
+        addToCart(productData, quantity);
         alert('Item added to cart!');
     };
 
@@ -32,20 +22,17 @@ const Product = ({ product }) => {
         <Layout>
             <div className="container">
                 <div className="product-page">
-                    {/* Product title and price */}
                     <div className="product-header">
                         <h1>{product.name}</h1>
-                        <p className="price">{product.price}</p>
+                        <p className="price">${Number(product.price).toFixed(2)}</p>
                     </div>
 
-                    {/* Main content: image + info */}
                     <div className="product-details">
                         <div className="product-image">
                             <img src={product.image} alt={product.name} />
                         </div>
 
                         <div className="product-info">
-                            {/* Size selection (not functional) */}
                             <div className="product-size">
                                 <label>Size:</label>
                                 <div className="size-buttons">
@@ -60,7 +47,6 @@ const Product = ({ product }) => {
                                 </select>
                             </div>
 
-                            {/* Quantity input */}
                             <div className="product-quantity">
                                 <label>Quantity:</label>
                                 <input
@@ -71,19 +57,16 @@ const Product = ({ product }) => {
                                 />
                             </div>
 
-                            {/* Add to cart button */}
                             <button className="add-to-cart" onClick={handleAddToCart}>
                                 Add To Cart
                             </button>
 
-                            {/* Product description */}
                             <p className="description">
-                                Discover our eco-friendly {product.name.toLowerCase()}, crafted using sustainable materials to help protect our planet.
+                                {product.description}
                             </p>
                         </div>
                     </div>
 
-                    {/* Related product section (placeholder) */}
                     <div className="related-products">
                         <h2>More Eco-Friendly Picks</h2>
                         <div className="related-products-list">
@@ -99,18 +82,29 @@ const Product = ({ product }) => {
     );
 };
 
-// Generate paths for static generation
-export async function getStaticPaths() {
-    const paths = products.map(prod => ({
-        params: { id: prod.id.toString() },
-    }));
-    return { paths, fallback: false };
-}
+// 动态加载产品数据
+export async function getServerSideProps({ params }) {
+    const res = await fetch(`http://localhost:3000/api/product/${params.id}`);
+    if (!res.ok) {
+        return { notFound: true };
+    }
 
-// Fetch product data at build time
-export async function getStaticProps({ params }) {
-    const product = products.find(prod => prod.id.toString() === params.id);
-    return { props: { product } };
+    const product = await res.json();
+
+    // 添加默认图片（以后可对接 product_images 表）
+    const fallbackImages = [
+        '/images/product1.jpg',
+        '/images/product2.jpg',
+        '/images/product3.jpg',
+        '/images/product4.jpg',
+    ];
+    product.image = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+
+    return {
+        props: {
+            product,
+        },
+    };
 }
 
 export default Product;
