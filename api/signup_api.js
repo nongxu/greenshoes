@@ -29,10 +29,10 @@ router.post('/auth/signup', async (req, res) => {
 
     // Insert new user into database
     const result = await pool.query(
-      `INSERT INTO users (email, password_hash, full_name, role, created_at)
-       VALUES ($1, $2, $3, $4, NOW())
+      `INSERT INTO users (email, password_hash, full_name, created_at)
+       VALUES ($1, $2, $3, NOW())
        RETURNING id`,
-      [email, hashedPassword, name, 'users']
+      [email, hashedPassword, name]
     );
 
     const userId = result.rows[0].id;
