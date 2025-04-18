@@ -97,6 +97,23 @@ export default function Checkout() {
   
       const data = await res.json();
       if (data.success) {
+        
+        // ✅ Send to inventory_api, reduce inventory
+        for (const item of cartItems) {
+          try {
+            await fetch("/api/inventory_api", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                productId: item.id,
+                quantity: item.quantity,
+              }),
+            });
+          } catch (err) {
+            console.error("Failed to update inventory for product:", item.id);
+          }
+        }
+
         // Clear cart and redirect to order confirmation page
         Cookies.remove("cart");
         setCartItems([]);

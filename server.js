@@ -33,6 +33,10 @@ server.use('/api/checkout_api', checkoutRouter);
 const productsManagementRouter = require('./api/products_management_api');
 server.use('/api/products', productsManagementRouter);
 
+const inventoryRouter = require('./api/inventory_api');
+server.use('/api/inventory_api', inventoryRouter);
+
+
 // Handling Next.js page requests
 server.all('*', (req, res) => {
     return handle(req, res);
