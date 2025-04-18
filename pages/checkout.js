@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
+import { useRouter } from "next/router";
 
 export default function Checkout() {
   // Store user input for checkout
+  const router = useRouter();
   const [userData, setUserData] = useState({
     name: "",
     address: "",
@@ -39,7 +41,14 @@ export default function Checkout() {
 
   // Read current user's saved address from the DB through API call
   useEffect(() => {
-    fetch("/api/user/addresses")
+    const token = Cookies.get("token"); 
+    if (!token) return; 
+  
+    fetch("/api/addresses", {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    })
       .then((res) => res.json())
       .then((data) => setSavedAddresses(data))
       .catch((err) => console.error("Failed to fetch addresses:", err));
@@ -64,7 +73,7 @@ export default function Checkout() {
   // Handle checkout submit: submits user's order, stores it in the DB, and returns a unique order ID.
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     // Prepare payload to send
     const payload = {
       name: userData.name,
@@ -75,24 +84,23 @@ export default function Checkout() {
       cvc: userData.cvc,
       items: cartItems.map((item) => ({
         id: item.id,
-        quantity: item.quantity
-      }))
+        quantity: item.quantity,
+      })),
     };
-
+  
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch("/api/checkout_api", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
-
+  
       const data = await res.json();
-
       if (data.success) {
-        setSuccessMessage(`Your order has been placed! Order ID: ${data.orderId}`);
-        // Optionally clear the cart cookie once the order is complete
+        // Clear cart and redirect to order confirmation page
         Cookies.remove("cart");
         setCartItems([]);
+        router.push(`/order-confirmation?orderId=${data.orderId}`);
       } else {
         alert("Checkout failed: " + (data.message || "Unknown error"));
       }
