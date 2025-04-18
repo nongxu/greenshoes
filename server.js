@@ -23,11 +23,12 @@ server.use('/api', signupRouter);
 const signinRouter = require('./api/signin_api');
 server.use('/api', signinRouter);
 
-const addressesRouter = require('./api/addresses_api');
-server.use('/api/addresses', addressesRouter);
 
 const ordersRouter = require('./api/orders_api');
 server.use('/api/orders', ordersRouter);
+
+const productsManagementRouter = require('./api/products_management_api');
+server.use('/api/products', productsManagementRouter);
 
 // Handling Next.js page requests
 server.all('*', (req, res) => {
