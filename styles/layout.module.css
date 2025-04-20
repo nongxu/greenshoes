@@ -4,53 +4,58 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-}
-
-.siteHeader {
+  }
+  
+  /* Header */
+  .siteHeader {
     background: linear-gradient(135deg, #66bb6a, #4caf50);
-    padding: 1.5rem 1rem; 
+    padding: 1.5rem 1rem;
     border-bottom: 0.1875rem solid #4caf50;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border-radius: 0 0 8px 8px;
-}
-
-/* Header content */
-.headerContent {
+  }
+  
+  /* Header content (logo + nav) */
+  .headerContent {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     padding: 0 1rem;
-}
-
-.siteTitle {
+  }
+  
+  /* Site title */
+  .siteTitle {
     font-size: 2.75rem;
     margin: 0;
     color: #ffffff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.siteNav {
+    text-decoration: none;
+  }
+  
+  /* Navigation */
+  .siteNav {
     display: flex;
     align-items: center;
-}
-
-.siteNav a {
+  }
+  
+  /* Nav links */
+  .navLink {
     margin-left: 1rem;
     font-size: 1.1rem;
-    text-decoration: none;
     color: #ffffff;
+    text-decoration: none;
     transition: color 0.3s ease;
-}
-
-.siteNav a:hover {
+  }
+  
+  .navLink:hover {
     text-decoration: underline;
     color: #e0f2f1;
-}
-
-/* Sign Out button styling */
-.siteNav button {
-    margin-left: 1rem;             /* match link spacing */
+  }
+  
+  /* Sign Out button */
+  .signoutBtn {
+    margin-left: 1rem;
     background: none;
     border: none;
     color: #ffffff;
@@ -58,45 +63,46 @@
     font-size: 1.1rem;
     cursor: pointer;
     transition: color 0.3s ease;
-}
-
-.siteNav button:hover {
+  }
+  
+  .signoutBtn:hover {
     text-decoration: underline;
     color: #e0f2f1;
-}
-
-/* Main content area */
-.siteMain {
+  }
+  
+  /* Main content */
+  .siteMain {
     flex: 1;
     padding: 2.5rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.siteFooter {
+  }
+  
+  /* Footer */
+  .siteFooter {
     background-color: #66bb6a;
     padding: 1rem;
     text-align: center;
     color: #ffffff;
     border-top: 0.1875rem solid #4caf50;
     box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
+  }
+  
+  /* Responsive tweaks */
+  @media (max-width: 768px) {
     .headerContent {
-        flex-direction: column;
-        text-align: center;
+      flex-direction: column;
+      text-align: center;
     }
-
     .siteNav {
-        margin-top: 1rem;
-        flex-wrap: wrap;
-        justify-content: center;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
     }
-
-    .siteNav a,
-    .siteNav button {
-        margin: 0 0.5rem;
+    .navLink,
+    .signoutBtn {
+      margin: 0 0.5rem;
     }
-}
+  }
+  

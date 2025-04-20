@@ -21,36 +21,57 @@ const cookieOpts = {
 // ─── SIGN UP ───────────────────────────────────────────────────────────────
 router.post(
   '/signup',
-  body('email').isEmail(),
-  body('password').isLength({ min: 4 }),
-  body('name').notEmpty(),
+  // Validate input fields
+  body('email').isEmail().withMessage('Please provide a valid email address'),
+  body('password')
+    .isLength({ min: 4 })
+    .withMessage('Password must be at least 4 characters long'),
+  body('name').trim().notEmpty().withMessage('Name cannot be empty'),
   async (req, res) => {
+    // Check for validation errors
     const errors = validationResult(req);
-    if (!errors.isEmpty())
+    if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
 
     const { name, email, password } = req.body;
     try {
+      // Prevent duplicate registrations
       const { rowCount } = await pool.query(
-        'SELECT 1 FROM users WHERE email=$1', [email]
+        'SELECT 1 FROM users WHERE email = $1',
+        [email]
       );
-      if (rowCount)
-        return res.status(409).json({ message: 'Email already registered' });
+      if (rowCount) {
+        return res
+          .status(409)
+          .json({ message: 'That email is already registered' });
+      }
 
-      const hashed = await bcrypt.hash(password, 10);
+      // Hash the password before saving
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Insert the new user into the database
       const { rows } = await pool.query(
-        `INSERT INTO users (full_name,email,password_hash,created_at)
-         VALUES($1,$2,$3,NOW()) RETURNING id`,
-        [name, email, hashed]
+        `INSERT INTO users (full_name, email, password_hash, created_at)
+         VALUES ($1, $2, $3, NOW())
+         RETURNING id`,
+        [name, email, hashedPassword]
       );
-      const userId = rows[0].id;
+      const user = { id: rows[0].id, email, role: 'user' };
 
-      const token = jwt.sign({ sub: userId, email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      // Create a JWT and set it as an httpOnly cookie
+      const token = jwt.sign(
+        { sub: user.id, email: user.email, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
       res.cookie('token', token, cookieOpts);
-      return res.status(201).json({ userId });
+
+      // Return the new user info
+      return res.status(201).json({ message: 'Signup successful', user });
     } catch (err) {
-      console.error(err);
-      return res.status(500).json({ message: 'Server error' });
+      console.error('Signup error:', err);
+      return res.status(500).json({ message: 'Internal server error' });
     }
   }
 );

@@ -1,84 +1,75 @@
-// pages/signin.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { mutate }     from 'swr';
-import Layout         from '../components/Layout';
-import styles         from '../styles/signin.module.css';
+import { useUserContext } from '../lib/UserContext';
+import Layout from '../components/Layout';
+import styles from '../styles/signin.module.css';
 
 export default function SigninPage() {
   const router = useRouter();
-  const [form, setForm]       = useState({ email: '', password: '', role: 'user' });
-  const [error, setError]     = useState(null);
+  const { setUser } = useUserContext();
+  const [form, setForm] = useState({ email: '', password: '', role: 'user' });
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = e =>
     setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handleLogin = async e => {
+  const handleSubmit = async e => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     const res = await fetch('/api/auth/signin', {
       method: 'POST',
-      credentials: 'include',              // ← get httpOnly cookie
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
+      body: JSON.stringify(form)
     });
     const body = await res.json();
     setLoading(false);
 
     if (!res.ok) {
-      setError(body.message || (body.errors && body.errors.map(e=>e.msg).join(', ')) || 'Login failed');
+      setError(body.message || 'Login failed');
       return;
     }
 
-    // 1) seed SWR so Layout.useUser() sees us immediately
-    mutate('/api/auth/me', { id: body.user.id, email: body.user.email, role: body.user.role }, false);
-
-    // 2) redirect based on role
-    if (body.user.role === 'admin') {
-      router.push('/admin/dashboard');
-    } else {
-      router.push('/user/dashboard');
-    }
+    setUser(body.user);
+    router.push(body.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
   };
 
   return (
     <Layout>
       <div className={styles.container}>
         <h2 className={styles.heading}>Login</h2>
-        <form onSubmit={handleLogin} className={styles.form}>
-          {error && <p className={styles.error}>{error}</p>}
-
+        {error && <p className={styles.error}>{error}</p>}
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Email */}
           <div className={styles.formGroup}>
             <label htmlFor="email">Email:</label>
             <input
               id="email"
               name="email"
               type="email"
-              placeholder="Enter your email"
               value={form.email}
               onChange={handleChange}
               required
               className={styles.input}
             />
           </div>
-
+          {/* Password */}
           <div className={styles.formGroup}>
             <label htmlFor="password">Password:</label>
             <input
               id="password"
               name="password"
               type="password"
-              placeholder="Enter your password"
               value={form.password}
               onChange={handleChange}
               required
               className={styles.input}
             />
           </div>
-
+          {/* Role */}
           <div className={styles.formGroup}>
             <label htmlFor="role">Role:</label>
             <select
@@ -87,7 +78,6 @@ export default function SigninPage() {
               value={form.role}
               onChange={handleChange}
               className={styles.input}
-              required
             >
               <option value="user">User</option>
               <option value="admin">Admin</option>

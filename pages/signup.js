@@ -1,82 +1,115 @@
 import { useState } from 'react';
-import Layout from '../components/Layout';
 import { useRouter } from 'next/router';
+import { useUserContext } from '../lib/UserContext';
+import Layout from '../components/Layout';
+import styles from '../styles/signup.module.css';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: ''
-  });
-  const [error, setError]   = useState('');
+  const { setUser } = useUserContext();
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setFormData(f => ({ ...f, [name]: value }));
-  };
+  const handleChange = e =>
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async e => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+    setError(null);
+
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match');
+      return;
     }
 
-    setError('');
     setLoading(true);
-
     const res = await fetch('/api/auth/signup', {
-      method:  'POST',
-      credentials: 'include',              // ← important to accept httpOnly cookie
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        name:     formData.name,
-        email:    formData.email,
-        password: formData.password
+      method: 'POST',
+      credentials: 'include',
+      headers:{ 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: form.name,
+        email: form.email,
+        password: form.password
       })
     });
-
+    const body = await res.json();
     setLoading(false);
-    if (res.ok) {
-      // cookie was set by the server; just redirect
-      return router.push('/user/dashboard');
+
+    if (!res.ok) {
+      setError(body.message || 'Signup failed');
+      return;
     }
 
-    const body = await res.json();
-    setError(body.message || 'Signup failed');
+    setUser(body.user);
+    router.push('/user/dashboard');
   };
 
   return (
     <Layout>
-      <h2>Sign Up</h2>
-      {error && <p style={{ color:'red' }}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        {['name','email','password','confirmPassword'].map(field => (
-          <div key={field} style={{ margin: '1rem 0' }}>
-            <label htmlFor={field}>
-              {field === 'confirmPassword'
-                ? 'Confirm Password'
-                : field.charAt(0).toUpperCase() + field.slice(1)}
-            </label>
+      <div className={styles.container}>
+        <h2 className={styles.heading}>Sign Up</h2>
+        {error && <p className={styles.error}>{error}</p>}
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Name */}
+          <div className={styles.formGroup}>
+            <label htmlFor="name">Name:</label>
             <input
-              id={field}
-              name={field}
-              type={field.includes('password') ? 'password'
-                    : field==='email'               ? 'email'
-                    : 'text'}
-              value={formData[field]}
+              id="name"
+              name="name"
+              type="text"
+              value={form.name}
               onChange={handleChange}
               required
-              style={{ width:'100%', padding:'8px' }}
+              className={styles.input}
             />
           </div>
-        ))}
-        <button type="submit" disabled={loading}>
-          {loading ? 'Signing up…' : 'Create Account'}
-        </button>
-      </form>
+          {/* Email */}
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email:</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+          </div>
+          {/* Password */}
+          <div className={styles.formGroup}>
+            <label htmlFor="password">Password:</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+          </div>
+          {/* Confirm Password */}
+          <div className={styles.formGroup}>
+            <label htmlFor="confirmPassword">Confirm Password:</label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={form.confirmPassword}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+          </div>
+
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? 'Signing up…' : 'Sign Up'}
+          </button>
+        </form>
+      </div>
     </Layout>
   );
 }
