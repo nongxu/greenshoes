@@ -48,6 +48,23 @@
     color: #e0f2f1;
 }
 
+/* Sign Out button styling */
+.siteNav button {
+    margin-left: 1rem;             /* match link spacing */
+    background: none;
+    border: none;
+    color: #ffffff;
+    font: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.siteNav button:hover {
+    text-decoration: underline;
+    color: #e0f2f1;
+}
+
 /* Main content area */
 .siteMain {
     flex: 1;
@@ -78,7 +95,8 @@
         justify-content: center;
     }
 
-    .siteNav a {
+    .siteNav a,
+    .siteNav button {
         margin: 0 0.5rem;
     }
 }

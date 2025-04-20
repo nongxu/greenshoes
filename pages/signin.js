@@ -1,119 +1,104 @@
-import Layout from '../components/Layout';
+// pages/signin.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
-import { signIn } from 'next-auth/react';
+import { mutate }     from 'swr';
+import Layout         from '../components/Layout';
+import styles         from '../styles/signin.module.css';
 
-const Landing = () => {
-    const router = useRouter();
+export default function SigninPage() {
+  const router = useRouter();
+  const [form, setForm]       = useState({ email: '', password: '', role: 'user' });
+  const [error, setError]     = useState(null);
+  const [loading, setLoading] = useState(false);
 
-    // Form state: email, password, and user role
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [role, setRole] = useState('user'); // 'user' or 'admin'
-    const [error, setError] = useState(null); //  Adding error status
+  const handleChange = e =>
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError(null); // Clear previous errors
+  const handleLogin = async e => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-        // call next-auth signIn function with credentials
-        const res = await signIn('credentials', {
-            redirect: false,
-            email,
-            password,
-            role
-        });
+    const res = await fetch('/api/auth/signin', {
+      method: 'POST',
+      credentials: 'include',              // ← get httpOnly cookie
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+    const body = await res.json();
+    setLoading(false);
 
-        if (res.error) {
-            setError('Invalid credentials');
-        } else {
-            // if login is successful, redirect to the dashboard based on role
-            if (role === 'admin') {
-                router.push('/admin/dashboard');
-            } else if (role === 'user') {
-                router.push('/user/dashboard');
-            } else {
-                router.push('/'); // fallback
-            }
-            
-        }
-    };
+    if (!res.ok) {
+      setError(body.message || (body.errors && body.errors.map(e=>e.msg).join(', ')) || 'Login failed');
+      return;
+    }
 
-    return (
-        <Layout>
-            {/* Login form container */}
-            <div style={{ maxWidth: '400px', margin: '100px auto' }}>
-                <h2>Login</h2>
-                <form onSubmit={handleLogin}>
-                    {/* Error message */}
-                    {error && (
-                        <p style={{ color: 'red', marginBottom: '15px' }}>
-                            {error}
-                        </p>
-                    )}
+    // 1) seed SWR so Layout.useUser() sees us immediately
+    mutate('/api/auth/me', { id: body.user.id, email: body.user.email, role: body.user.role }, false);
 
-                    {/* Email input field */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <label>Email:</label>
-                        <input 
-                            type="email" 
-                            value={email} 
-                            onChange={(e) => setEmail(e.target.value)} 
-                            style={inputStyle} 
-                            required 
-                        />
-                    </div>
+    // 2) redirect based on role
+    if (body.user.role === 'admin') {
+      router.push('/admin/dashboard');
+    } else {
+      router.push('/user/dashboard');
+    }
+  };
 
-                    {/* Password input field */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <label>Password:</label>
-                        <input 
-                            type="password" 
-                            value={password} 
-                            onChange={(e) => setPassword(e.target.value)} 
-                            style={inputStyle} 
-                            required 
-                        />
-                    </div>
+  return (
+    <Layout>
+      <div className={styles.container}>
+        <h2 className={styles.heading}>Login</h2>
+        <form onSubmit={handleLogin} className={styles.form}>
+          {error && <p className={styles.error}>{error}</p>}
 
-                    {/* Role selection dropdown */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <label>Role:</label>
-                        <select 
-                            value={role} 
-                            onChange={(e) => setRole(e.target.value)} 
-                            style={inputStyle}
-                        >
-                            <option value="user">User</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email:</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="Enter your email"
+              value={form.email}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+          </div>
 
-                    {/* Submit button */}
-                    <button type="submit" style={buttonStyle}>Login</button>
-                </form>
-            </div>
-        </Layout>
-    );
-};
+          <div className={styles.formGroup}>
+            <label htmlFor="password">Password:</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              value={form.password}
+              onChange={handleChange}
+              required
+              className={styles.input}
+            />
+          </div>
 
-// Common input styling
-const inputStyle = {
-    width: '100%',
-    padding: '8px',
-    margin: '5px 0',
-    boxSizing: 'border-box'
-};
+          <div className={styles.formGroup}>
+            <label htmlFor="role">Role:</label>
+            <select
+              id="role"
+              name="role"
+              value={form.role}
+              onChange={handleChange}
+              className={styles.input}
+              required
+            >
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
 
-// Login button styling
-const buttonStyle = {
-    width: '100%',
-    padding: '10px',
-    backgroundColor: '#0070f3',
-    color: 'white',
-    border: 'none',
-    borderRadius: '4px',
-    cursor: 'pointer'
-};
-
-export default Landing;
+          <button type="submit" className={styles.button} disabled={loading}>
+            {loading ? 'Signing in…' : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </Layout>
+  );
+}
