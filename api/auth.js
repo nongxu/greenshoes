@@ -1,34 +1,32 @@
 // api/auth.js
-const express = require('express');
+require('dotenv').config();
+const express             = require('express');
 const { body, validationResult } = require('express-validator');
-const bcrypt = require('bcrypt');
-const jwt    = require('jsonwebtoken');
-const cookieParser = require('cookie-parser');
-const { pool } = require('../db/connection');
-const ensureAuth = require('../utils/ensureAuth');
+const bcrypt              = require('bcrypt');
+const jwt                 = require('jsonwebtoken');
+const cookieParser        = require('cookie-parser');
+const { pool }            = require('../db/connection');
+const ensureAuth          = require('../utils/ensureAuth');
 
 const router = express.Router();
 router.use(cookieParser());
 
-// common cookie options
 const cookieOpts = {
   httpOnly: true,
   secure:   process.env.NODE_ENV === 'production',
   sameSite: 'lax',
-  maxAge:   60 * 60 * 1000, // 1h
+  maxAge:   60 * 60 * 1000, // 1 hour
 };
 
 // ─── SIGN UP ───────────────────────────────────────────────────────────────
 router.post(
   '/signup',
-  // Validate input fields
   body('email').isEmail().withMessage('Please provide a valid email address'),
   body('password')
     .isLength({ min: 4 })
     .withMessage('Password must be at least 4 characters long'),
   body('name').trim().notEmpty().withMessage('Name cannot be empty'),
   async (req, res) => {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -48,27 +46,34 @@ router.post(
       }
 
       // Hash the password before saving
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const password_hash = await bcrypt.hash(password, 10);
 
       // Insert the new user into the database
       const { rows } = await pool.query(
         `INSERT INTO users (full_name, email, password_hash, created_at)
          VALUES ($1, $2, $3, NOW())
          RETURNING id`,
-        [name, email, hashedPassword]
+        [name, email, password_hash]
       );
-      const user = { id: rows[0].id, email, role: 'user' };
+      const newUser = {
+        id:   rows[0].id,
+        email,
+        name,
+        role: 'user'
+      };
 
       // Create a JWT and set it as an httpOnly cookie
       const token = jwt.sign(
-        { sub: user.id, email: user.email, role: user.role },
+        { sub: newUser.id, email: newUser.email, role: newUser.role },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
       res.cookie('token', token, cookieOpts);
 
       // Return the new user info
-      return res.status(201).json({ message: 'Signup successful', user });
+      return res
+        .status(201)
+        .json({ message: 'Signup successful', user: newUser });
     } catch (err) {
       console.error('Signup error:', err);
       return res.status(500).json({ message: 'Internal server error' });
@@ -83,40 +88,72 @@ router.post(
   body('password').notEmpty(),
   async (req, res) => {
     const errors = validationResult(req);
-    if (!errors.isEmpty())
+    if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
+    }
 
     const { email, password, role } = req.body;
     const table = role === 'admin' ? 'admins' : 'users';
 
     try {
+      // Fetch the user including their full name
       const { rows } = await pool.query(
-        `SELECT id,password_hash FROM ${table} WHERE email=$1`, [email]
+        `SELECT id, full_name, password_hash FROM ${table} WHERE email = $1`,
+        [email]
       );
-      const user = rows[0];
-      if (!user || !(await bcrypt.compare(password, user.password_hash)))
+      const dbUser = rows[0];
+      if (!dbUser || !(await bcrypt.compare(password, dbUser.password_hash))) {
         return res.status(401).json({ message: 'Invalid credentials' });
+      }
 
-      const token = jwt.sign({ sub: user.id, role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+      const signedUser = {
+        id:    dbUser.id,
+        email,
+        name:  dbUser.full_name,
+        role
+      };
+
+      // Create JWT and set cookie
+      const token = jwt.sign(
+        { sub: signedUser.id, email: signedUser.email, role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
       res.cookie('token', token, cookieOpts);
+
       return res.json({
         message: 'Login successful',
-        user: { id: user.id, email, role }
+        user: signedUser
       });
     } catch (err) {
-      console.error(err);
+      console.error('Signin error:', err);
       return res.status(500).json({ message: 'Server error' });
     }
   }
 );
 
 // ─── WHO AM I ───────────────────────────────────────────────────────────────
-router.get('/me', ensureAuth, (req, res) => {
-  res.json({
-    id:    req.user.sub,
-    email: req.user.email,
-    role:  req.user.role
-  });
+router.get('/me', ensureAuth, async (req, res) => {
+  const userId = req.user.sub;
+  try {
+    const { rows } = await pool.query(
+      'SELECT id, email, full_name FROM users WHERE id = $1',
+      [userId]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    const u = rows[0];
+    return res.json({
+      id:    u.id,
+      email: u.email,
+      name:  u.full_name,
+      role:  u.role
+    });
+  } catch (err) {
+    console.error('Error in /me:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
 });
 
 // ─── SIGN OUT ───────────────────────────────────────────────────────────────
