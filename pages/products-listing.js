@@ -49,66 +49,52 @@ const ImageSlider = () => {
     );
   };
 
-const ProductCard = ({ product }) => (
-  <div
-    style={{
-      backgroundColor: '#fff',
-      borderRadius: '8px',
-      overflow: 'hidden',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-      cursor: 'pointer',
-      minWidth: '100%', // will take full width of grid cell
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'scale(1.03)';
-      e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'scale(1)';
-      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
-    }}
-  >
-    <Link legacyBehavior href={`/product/${product.id}`}>
-      <a style={{ textDecoration: 'none', color: 'inherit' }}>
-        <div>
-          <img
-            src={product.image}
-            alt={product.name}
-            style={{
-              width: '100%',
-              height: '250px',
-              objectFit: 'cover'
-            }}
-          />
-        </div>
-        <div style={{ padding: '15px' }}>
-          <h3 style={{ margin: '0 0 10px 0', fontSize: '1.5rem' }}>
-            {product.name}
-          </h3>
-          <h2 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#555' }}>
-            USD {Number(product.price).toFixed(2)}
-          </h2>
-          <button
-            style={{
-              display: 'block',
-              width: '100%',
-              padding: '10px 0',
-              backgroundColor: '#0070f3',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '5px',
-              fontSize: '1rem',
-              cursor: 'pointer'
-            }}
-          >
-            View Details
-          </button>
-        </div>
-      </a>
-    </Link>
-  </div>
-);
+  const ProductCard = ({ product }) => (
+    <div
+      style={{
+        backgroundColor: '#fff',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+        transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+        cursor: 'pointer',
+        minWidth: '100%', // will take full width of grid cell
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'scale(1.03)';
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.2)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+      }}
+    >
+      <Link legacyBehavior href={`/product/${product.id}`}>
+        <a style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div>
+            <img
+              src={product.image}
+              alt={product.name}
+              style={{
+                width: '100%',
+                height: '250px',
+                objectFit: 'cover',
+              }}
+            />
+          </div>
+          <div style={{ padding: '15px' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.5rem' }}>
+              {product.name}
+            </h3>
+            <h2 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', color: '#555' }}>
+              USD {Number(product.price).toFixed(2)}
+            </h2>
+            {/* Removed the View Details button */}
+          </div>
+        </a>
+      </Link>
+    </div>
+  );
 
 const ProductListing = ({ products }) => {
   // Assuming products have an isAccessory property for filtering
