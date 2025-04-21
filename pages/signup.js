@@ -109,6 +109,9 @@ export default function SignupPage() {
             {loading ? 'Signing up…' : 'Sign Up'}
           </button>
         </form>
+        <p className={styles.linkText}>
+          Already have an account? <a href="/signin" className={styles.link}>Sign in here</a>
+        </p>
       </div>
     </Layout>
   );

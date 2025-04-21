@@ -1,20 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db/connection');
+const adminOnly = require('../utils/adminOnly');
 
-// simple admin auth middleware
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
-function adminAuth(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth || auth !== `Bearer ${ADMIN_TOKEN}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-  next();
-}
+// Middleware to restrict access to admin users
+router.use(adminOnly);
 
-router.use(adminAuth);
-
-// create a new product
+// Create a new product
 router.post('/', async (req, res) => {
   const { name, description, price, stock_quantity, shoe_category } = req.body;
 
@@ -36,25 +28,22 @@ router.post('/', async (req, res) => {
          (name, description, price, stock_quantity, shoe_category)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING
-         id,
-         name,
-         description,
-         price,
-         stock_quantity   AS "stockQuantity",
-         shoe_category    AS "shoeCategory",
-         created_at       AS "createdAt",
-         updated_at       AS "updatedAt"`,
+         id, name, description, price,
+         stock_quantity AS "stockQuantity",
+         shoe_category AS "shoeCategory",
+         created_at AS "createdAt",
+         updated_at AS "updatedAt"`,
       [name, description, price, stock_quantity, shoe_category]
     );
 
     res.status(201).json({ product });
   } catch (err) {
-    console.error(err);
+    console.error('Error inserting product:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// update an existing product
+// Update an existing product
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock_quantity, shoe_category } = req.body;
@@ -101,14 +90,11 @@ router.patch('/:id', async (req, res) => {
        SET ${sets.join(', ')}
      WHERE id = $${values.length}
      RETURNING
-       id,
-       name,
-       description,
-       price,
-       stock_quantity   AS "stockQuantity",
-       shoe_category    AS "shoeCategory",
-       created_at       AS "createdAt",
-       updated_at       AS "updatedAt"
+       id, name, description, price,
+       stock_quantity AS "stockQuantity",
+       shoe_category AS "shoeCategory",
+       created_at AS "createdAt",
+       updated_at AS "updatedAt"
   `;
 
   try {
@@ -118,12 +104,12 @@ router.patch('/:id', async (req, res) => {
     }
     res.json({ product });
   } catch (err) {
-    console.error(err);
+    console.error('Error updating product:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// delete a product
+// Delete a product
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
 
@@ -137,7 +123,7 @@ router.delete('/:id', async (req, res) => {
     }
     res.json({ message: 'Product deleted successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('Error deleting product:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

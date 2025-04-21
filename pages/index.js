@@ -27,7 +27,7 @@ const Home = ({ products }) => {
           </Link>
 
           {user ? (
-            <Link href="/user/dashboard">
+            <Link href={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'}>
               <button className={styles.primaryBtn}>Dashboard</button>
             </Link>
           ) : (

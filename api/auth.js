@@ -83,78 +83,80 @@ router.post(
 
 // ─── SIGN IN ────────────────────────────────────────────────────────────────
 router.post(
-  '/signin',
-  body('email').isEmail(),
-  body('password').notEmpty(),
-  async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
-    const { email, password, role } = req.body;
-    const table = role === 'admin' ? 'admins' : 'users';
-
-    try {
-      // Fetch the user including their full name
-      const { rows } = await pool.query(
-        `SELECT id, full_name, password_hash FROM ${table} WHERE email = $1`,
-        [email]
-      );
-      const dbUser = rows[0];
-      if (!dbUser || !(await bcrypt.compare(password, dbUser.password_hash))) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+    '/signin',
+    body('email').isEmail(),
+    body('password').notEmpty(),
+    async (req, res) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
       }
-
-      const signedUser = {
-        id:    dbUser.id,
-        email,
-        name:  dbUser.full_name,
-        role
-      };
-
-      // Create JWT and set cookie
-      const token = jwt.sign(
-        { sub: signedUser.id, email: signedUser.email, role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
+  
+      const { email, password, role = 'user' } = req.body;
+      const table = role === 'admin' ? 'admins' : 'users';
+  
+      try {
+        const { rows } = await pool.query(
+          `SELECT id, ${role === 'user' ? 'full_name,' : ''} password_hash FROM ${table} WHERE email = $1`,
+          [email]
+        );
+        const dbUser = rows[0];
+        if (!dbUser || !(await bcrypt.compare(password, dbUser.password_hash))) {
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+  
+        const signedUser = {
+          id: dbUser.id,
+          email,
+          name: role === 'admin' ? 'Admin' : dbUser.full_name,
+          role
+        };
+  
+        const token = jwt.sign(
+          { sub: signedUser.id, email: signedUser.email, role },
+          process.env.JWT_SECRET,
+          { expiresIn: '1h' }
+        );
+        res.cookie('token', token, cookieOpts);
+  
+        return res.json({
+          message: 'Login successful',
+          user: signedUser
+        });
+      } catch (err) {
+        console.error('Signin error:', err);
+        return res.status(500).json({ message: 'Server error' });
+      }
+    }
+  );
+  
+  // ─── WHO AM I ───────────────────────────────────────────────────────────────
+  router.get('/me', ensureAuth, async (req, res) => {
+    const userId = req.user.sub;
+    const role = req.user.role;
+  
+    const table = role === 'admin' ? 'admins' : 'users';
+  
+    try {
+      const { rows } = await pool.query(
+        `SELECT id, email ${role === 'user' ? ', full_name' : ''} FROM ${table} WHERE id = $1`,
+        [userId]
       );
-      res.cookie('token', token, cookieOpts);
-
+      if (!rows.length) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      const u = rows[0];
       return res.json({
-        message: 'Login successful',
-        user: signedUser
+        id: u.id,
+        email: u.email,
+        name: role === 'admin' ? 'Admin' : u.full_name,
+        role
       });
     } catch (err) {
-      console.error('Signin error:', err);
+      console.error('Error in /me:', err);
       return res.status(500).json({ message: 'Server error' });
     }
-  }
-);
-
-// ─── WHO AM I ───────────────────────────────────────────────────────────────
-router.get('/me', ensureAuth, async (req, res) => {
-  const userId = req.user.sub;
-  try {
-    const { rows } = await pool.query(
-      'SELECT id, email, full_name FROM users WHERE id = $1',
-      [userId]
-    );
-    if (!rows.length) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-    const u = rows[0];
-    return res.json({
-      id:    u.id,
-      email: u.email,
-      name:  u.full_name,
-      role:  u.role
-    });
-  } catch (err) {
-    console.error('Error in /me:', err);
-    return res.status(500).json({ message: 'Server error' });
-  }
-});
+  });
 
 // ─── SIGN OUT ───────────────────────────────────────────────────────────────
 router.post('/signout', (req, res) => {

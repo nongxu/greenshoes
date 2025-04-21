@@ -23,6 +23,18 @@
   .formGroup {
     margin-bottom: 1rem;
   }
+
+  .linkText {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .link {
+    color: #0070f3;
+    text-decoration: underline;
+    cursor: pointer;
+  }
   
   .input {
     width: 100%;
