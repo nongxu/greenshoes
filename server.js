@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const next = require('next');
 const {connectDB} = require('./db/connection');
-
+const cookieParser = require('cookie-parser');
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
@@ -11,30 +11,30 @@ const server = express();
 
 connectDB(); // Establishing a database connection
 
+
 server.use(express.json());
+server.use(cookieParser());
 
-// Mount the route for the product list
-const productsRouter = require('./routes/products');
-server.use('/api/products', productsRouter);
+// Auth routes
+server.use('/api/auth', require('./api/auth'));
 
-const signupRouter = require('./api/signup_api');
-server.use('/api', signupRouter);
+// Products (public)
+server.use('/api/products', require('./api/products'));
 
-const signinRouter = require('./api/signin_api');
-server.use('/api', signinRouter);
+// Product‑management (admin)
+server.use('/api/products-management', require('./api/products_management_api'));
 
+// Addresses (protected inside the router)
+server.use('/api/addresses', require('./api/addresses_api'));
 
-const ordersRouter = require('./api/orders_api');
-server.use('/api/orders', ordersRouter);
+// Orders (protected inside the router)
+server.use('/api/orders', require('./api/orders_api'));
 
-const checkoutRouter = require('./api/checkout_api');
-server.use('/api/checkout_api', checkoutRouter);
+// Checkout
+server.use('/api/checkout', require('./api/checkout_api'));
 
-const productsManagementRouter = require('./api/products_management_api');
-server.use('/api/products', productsManagementRouter);
-
-const inventoryRouter = require('./api/inventory_api');
-server.use('/api/inventory_api', inventoryRouter);
+// Inventory
+server.use('/api/inventory', require('./api/inventory_api'));
 
 
 // Handling Next.js page requests
@@ -48,12 +48,3 @@ app.prepare().then(() => {
         console.log('> Ready on http://localhost:3000');
     });
 });
-
-// The following is another way to start the server, you can enable the database connection as needed before starting
-// const startServer = async () => {
-//     await db.connectDB();
-//     server.listen(3000, () => {
-//         console.log('Server running on http://localhost:3000');
-//     });
-// }
-// startServer();

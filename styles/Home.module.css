@@ -1,0 +1,101 @@
+/* styles/Home.module.css */
+
+.hero {
+    text-align: center;
+    padding: 100px 20px;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+  }
+  
+  .title {
+    font-size: 3rem;
+    margin: 0 0 10px;
+    color: #2e7d32;
+  }
+  
+  .greeting {
+    font-size: 1.25rem;
+    margin: 0 0 20px;
+    color: #558b2f;
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+    margin: 0 0 40px;
+    color: #4e342e;
+  }
+  
+  .buttonRow {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  
+  .primaryBtn {
+    padding: 16px 32px;
+    font-size: 18px;
+    font-weight: 600;
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  
+  .secondaryBtn {
+    padding: 14px 28px;
+    font-size: 16px;
+    font-weight: 500;
+    background: white;
+    color: #43a047;
+    border: 2px solid #43a047;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  
+  .showcase {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+    padding: 60px 20px;
+  }
+  
+  .card {
+    width: 220px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.15s ease;
+  }
+  
+  .card:hover {
+    transform: translateY(-4px);
+  }
+  
+  .cardImage {
+    width: 100%;
+    height: auto;
+  }
+  
+  .cardTitle {
+    font-size: 1.1rem;
+    margin: 12px 0 4px;
+    color: #2e7d32;
+  }
+  
+  .cardPrice {
+    font-size: 1rem;
+    margin: 0 0 12px;
+    color: #555;
+  }
+  
+  .noProducts {
+    font-size: 1.2rem;
+    color: #777;
+  }
+  
