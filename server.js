@@ -18,12 +18,16 @@ server.use(cookieParser());
 // Auth routes
 server.use('/api/auth', require('./api/auth'));
 
-
 // Products (public)
 server.use('/api/products', require('./routes/products'));
 
 // Product‑management (admin)
 server.use('/api/products-management', require('./api/products_management_api'));
+
+// Addresses (protected inside the router)
+const addressRouter = require('./api/addresses_api');
+server.use('/api/addresses', addressRouter);
+
 
 // Orders (protected inside the router)
 server.use('/api/orders', require('./api/orders_api'));
