@@ -12,20 +12,16 @@ const Home = ({ products }) => {
     <Layout>
       <div className={styles.hero}>
         <h1 className={styles.title}>Welcome to GreenShoes</h1>
-
         {user && (
           <p className={styles.greeting}>Welcome back, {user.name}!</p>
         )}
-
         <p className={styles.subtitle}>
           Your one‑stop shop for all things footwear.
         </p>
-
         <div className={styles.buttonRow}>
           <Link href="/products-listing">
             <button className={styles.primaryBtn}>Shop Now</button>
           </Link>
-
           {user ? (
             <Link href={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'}>
               <button className={styles.primaryBtn}>Dashboard</button>
@@ -46,15 +42,17 @@ const Home = ({ products }) => {
       <div className={styles.showcase}>
         {products.length > 0 ? (
           products.map((p) => (
-            <div key={p.id} className={styles.card}>
-              <img
-                src={p.image_url || '/images/default.jpg'}
-                alt={p.name}
-                className={styles.cardImage}
-              />
-              <h3 className={styles.cardTitle}>{p.name}</h3>
-              <p className={styles.cardPrice}>${p.price}</p>
-            </div>
+            <Link legacyBehavior key={p.id} href={`/product/${p.id}`}>
+              <a className={styles.card}>
+                <img
+                  src={p.image_url || '/images/default.jpg'}
+                  alt={p.name}
+                  className={styles.cardImage}
+                />
+                <h3 className={styles.cardTitle}>{p.name}</h3>
+                <p className={styles.cardPrice}>${p.price}</p>
+              </a>
+            </Link>
           ))
         ) : (
           <p className={styles.noProducts}>No products available</p>
