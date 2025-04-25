@@ -7,7 +7,7 @@ import styles from '../../styles/user-address.module.css';
 export default function AddressBook() {
   const { user } = useUserContext();
   const [addresses, setAddresses] = useState([]);
-  const [form, setForm] = useState({ name: '', address: '' });
+  const [form, setForm] = useState({ name: '', address: '', phone: '' });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -34,7 +34,7 @@ export default function AddressBook() {
   };
 
   const handleAdd = async () => {
-    if (!form.name || !form.address) return;
+    if (!form.name || !form.address || !form.phone) return;
     try {
       const res = await fetch('/api/addresses', {
         method: 'POST',
@@ -86,6 +86,14 @@ export default function AddressBook() {
             onChange={handleChange}
             className={styles.input}
           />
+          <input
+             name="phone"
+             placeholder="Phone Number"
+             value={form.phone}
+             onChange={handleChange}
+             className={styles.input}
+           />
+
           <button onClick={handleAdd} className={styles.addButton}>
             Add Address
           </button>

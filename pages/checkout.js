@@ -79,6 +79,7 @@ export default function Checkout() {
       name: userData.name,
       shippingAddress: userData.address,
       billingAddress: userData.billingAddress,
+      phone: userData.phone, 
       cardNumber: userData.cardNumber,
       expiration: userData.expiration,
       cvc: userData.cvc,
@@ -87,6 +88,7 @@ export default function Checkout() {
         quantity: item.quantity,
       })),
     };
+    
   
     try {
       const res = await fetch("/api/checkout_api", {
@@ -212,6 +214,9 @@ export default function Checkout() {
             onChange={handleChange}
             disabled={billingSameAsShipping}
           />
+
+          <Input label="Phone Number" name="phone" value={userData.phone} onChange={handleChange} />
+
 
           {/* Payment section */}
           <Input label="Card Number" name="cardNumber" value={userData.cardNumber} onChange={handleChange} />

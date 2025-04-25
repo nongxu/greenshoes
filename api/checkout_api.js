@@ -6,6 +6,7 @@ const { pool } = require('../db/connection');
 router.post('/', async (req, res) => {
   const {
     name,
+    phone,
     shippingAddress,
     billingAddress,
     cardNumber,
