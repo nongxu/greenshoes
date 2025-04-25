@@ -30,7 +30,7 @@ router.use(ensureAuth);
  * List all orders for the logged‑in user
  */
 router.get('/', async (req, res) => {
-  const userId = req.user.sub;
+  const userId = req.user?.sub || req.cookies.guestId || null;
   try {
     // Fetch the orders
     const { rows: orders } = await pool.query(
@@ -64,7 +64,7 @@ router.get('/', async (req, res) => {
  * Create a new order for the current user
  */
 router.post('/', async (req, res) => {
-  const userId = req.user.sub;
+  const userId = req.user?.sub || req.cookies.guestId || null;
   const { items } = req.body;
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ message: 'Items array is required' });
@@ -153,7 +153,7 @@ router.get('/:id', async (req, res) => {
  * Retrieve a single order by ID (must belong to current user)
  */
 router.get('/:id', async (req, res) => {
-  const userId = req.user.sub;
+  const userId = req.user?.sub || req.cookies.guestId || null;
   const orderId = req.params.id;
   try {
     const { rows: [order] } = await pool.query(

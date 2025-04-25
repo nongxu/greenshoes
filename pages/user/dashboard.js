@@ -49,9 +49,9 @@ export default function Dashboard() {
                       <strong>Order #{o.id}</strong><br/>
                       Date: {o.date}<br/>
                       Status: {o.status}<br/>
-                      Total: ${o.total.toFixed(2)}
+                      Total: ${Number(o.total).toFixed(2)}
                     </div>
-                    <Link href={`/orders/${o.id}`}>
+                    <Link href={`/user/order-details?orderId=${o.id}`}>
                       <button className={styles.viewBtn}>
                         View Details
                       </button>

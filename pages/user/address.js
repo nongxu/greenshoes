@@ -105,7 +105,9 @@ export default function AddressBook() {
             <p>Loading…</p>
           ) : (
             <ul className={styles.list}>
-              {addresses.map((addr, idx) => (
+              {addresses
+                .filter(addr => addr && addr.name && addr.address && addr.phone) // ✅ Filter empty address entries
+                .map((addr, idx) => (
                 <li key={idx} className={styles.item}>
                   <div>
                     <strong>{addr.name}</strong>
