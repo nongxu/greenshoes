@@ -39,6 +39,11 @@ export default function Layout({ children }) {
               <a className={styles.navLink}>Cart</a>
             </Link>
             {user && (
+              <Link href="/user/dashboard" legacyBehavior>
+                <a className={styles.navLink}>Dashboard</a>
+              </Link>
+            )}
+            {user && (
               <button
                 onClick={handleSignout}
                 className={styles.signoutBtn}

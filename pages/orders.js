@@ -1,7 +1,11 @@
+// pages/orders.js
 import { useState } from "react";
+import { useRouter } from "next/router";
 import Layout from "../components/Layout";
 
 export default function OrderPage() {
+  const router = useRouter();
+
   // Simulated login state (you can replace with real auth later)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -23,14 +27,14 @@ export default function OrderPage() {
   // Search for order by ID (guest mode)
   const handleSearch = async () => {
     setErrorMsg("");
-    setOrderResult(null);
     if (!orderIdInput) return;
 
     try {
       const res = await fetch(`/api/orders/${orderIdInput}`);
       if (!res.ok) throw new Error("Order not found");
-      const data = await res.json();
-      setOrderResult(data);
+
+      // ✅ If order exists, redirect to details page
+      router.push(`/user/order-details?orderId=${orderIdInput}`);
     } catch (err) {
       setErrorMsg("Order not found. Please check the order ID.");
     }
@@ -84,24 +88,7 @@ export default function OrderPage() {
           </>
         )}
 
-        {/* Order result (either from button or search) */}
-        {orderResult && (
-          <div style={{ marginTop: "30px" }}>
-            <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>
-              Order #{orderResult.id} Details
-            </h3>
-            <p>Date: {orderResult.date}</p>
-            <p>Status: {orderResult.status}</p>
-            <ul>
-              {orderResult.items.map((item, idx) => (
-                <li key={idx}>
-                  {item.name} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-            <p style={{ fontWeight: "bold" }}>Total: ${orderResult.total.toFixed(2)}</p>
-          </div>
-        )}
+        {/* No need to render inline result since we redirect on success */}
       </div>
     </Layout>
   );
