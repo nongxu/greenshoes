@@ -42,11 +42,11 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   const userId = req.user.sub;
-  const { name, address } = req.body;
+  const { name, address, phone } = req.body;
 
-  if (!name || !address) {
-    return res.status(400).json({ message: 'Name and address are required' });
-  }
+  if (!name || !address || !phone) {
+    return res.status(400).json({ message: 'Name, address, and phone are required' });
+  }  
 
   try {
     // Fetch existing
@@ -57,7 +57,7 @@ router.post('/', async (req, res) => {
     let existing = rows[0]?.address || [];
 
     if (!Array.isArray(existing)) existing = [existing];
-    existing.push({ name, address });
+    existing.push({ name, address, phone });
 
     // Save back
     await pool.query(
@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
       [existing, userId]
     );
 
-    return res.status(201).json({ name, address });
+    return res.status(201).json({ name, address, phone });
   } catch (err) {
     console.error('Error saving address:', err);
     return res.status(500).json({ message: 'Server error' });

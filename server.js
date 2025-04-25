@@ -19,7 +19,7 @@ server.use(cookieParser());
 server.use('/api/auth', require('./api/auth'));
 
 // Products (public)
-server.use('/api/products', require('./api/products'));
+server.use('/api/products', require('./api/products_listing_api'));
 
 // Product‑management (admin)
 server.use('/api/products-management', require('./api/products_management_api'));
@@ -35,6 +35,9 @@ server.use('/api/checkout', require('./api/checkout_api'));
 
 // Inventory
 server.use('/api/inventory', require('./api/inventory_api'));
+
+// Product Detail
+server.use('/api/product', require('./api/product_detail_api'));
 
 
 // Handling Next.js page requests
