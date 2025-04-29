@@ -76,15 +76,22 @@ export default function Checkout() {
   
     // Prepare payload to send
     const payload = {
+      name: userData.name,
+      phone: userData.phone,
+      shippingAddress: userData.address,
+      billingAddress: userData.billingAddress,
+      cardNumber: userData.cardNumber,
+      expiration: userData.expiration,
+      cvc: userData.cvc,
       items: cartItems.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
       })),
-    };    
+    };
 
-  // /api/orders
+    // /api/orders
     try {
-      const res = await fetch("/api/orders", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -112,7 +119,7 @@ export default function Checkout() {
         // Clear cart and redirect to order confirmation page
         Cookies.remove("cart");
         setCartItems([]);
-        router.push(`/order-confirmation?orderId=${data.order.id}`);
+        router.push(`/order-confirmation?orderId=${data.orderId}`);
       } else {
         alert("Checkout failed: " + (data.message || "Unknown error"));
       }

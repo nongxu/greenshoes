@@ -7,6 +7,11 @@ const Product = ({ product }) => {
     const [quantity, setQuantity] = useState(1);
 
     const handleAddToCart = () => {
+        if (quantity > product.stock_quantity) {
+            alert(`Only ${product.stock_quantity} item(s) left in stock.`);
+            return;
+        }
+
         const productData = {
             id: product.id,
             name: product.name,
@@ -52,6 +57,7 @@ const Product = ({ product }) => {
                                 <input
                                     type="number"
                                     min="1"
+                                    max={product.stock_quantity}
                                     value={quantity}
                                     onChange={(e) => setQuantity(parseInt(e.target.value))}
                                 />
