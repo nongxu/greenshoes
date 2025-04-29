@@ -17,7 +17,7 @@ export default function OrderDetails() {
 
     (async () => {
       try {
-        const res = await fetch(`/api/orders/${orderId}`, { credentials: 'include' });
+        const res = await fetch(`/api/orders_api/${orderId}`, { credentials: 'include' });
         if (!res.ok) throw new Error();
         const { order } = await res.json();
         setOrder(order);
@@ -38,9 +38,9 @@ export default function OrderDetails() {
         {order && (
           <div className={styles.item}>
             <p><strong>Order ID:</strong> {order.id}</p>
-            <p><strong>Date:</strong> {order.date}</p>
+            <p><strong>Date:</strong> {order.createdAt}</p>
             <p><strong>Status:</strong> {order.status}</p>
-            <p><strong>Total:</strong> ${Number(order.total).toFixed(2)}</p>
+            <p><strong>Total:</strong> ${Number(order.totalPrice).toFixed(2)}</p>
 
             <h3 style={{ marginTop: '1rem' }}>Items</h3>
             <ul className={styles.list}>

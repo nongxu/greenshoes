@@ -98,7 +98,9 @@ const ImageSlider = () => {
 
 const ProductListing = ({ products }) => {
   // Assuming products have an isAccessory property for filtering
-  const clothingProducts = products.filter(product => !product.isAccessory);
+  const clothingProducts = products.filter(
+    product => !product.isAccessory && product.stock_quantity > 0   // Filter products with 0 stock
+  );  
 
   return (
     <Layout>

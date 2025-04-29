@@ -1,7 +1,8 @@
 // pages/orders.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import Layout from "../components/Layout";
+import Cookies from 'js-cookie';
 
 export default function OrderPage() {
   const router = useRouter();
@@ -18,11 +19,41 @@ export default function OrderPage() {
   // Error message if order not found
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Simulated user's past orders (only used when logged in)
-  const [userOrders, setUserOrders] = useState([
-    { id: 101, date: "2025-03-20", total: 59.98, status: "Delivered" },
-    { id: 102, date: "2025-03-25", total: 99.49, status: "Processing" }
-  ]);
+  // List of user's orders if logged in
+  const [userOrders, setUserOrders] = useState([]);
+
+  // Loading state for fetching user orders
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Check if user is logged in by checking token in cookies
+  useEffect(() => {
+    const token = Cookies.get('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Fetch user order history when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchOrders = async () => {
+        setLoadingOrders(true);
+        try {
+          const res = await fetch('/api/orders_api');
+          const data = await res.json();
+          if (res.ok) {
+            setUserOrders(data.orders);
+          } else {
+            console.error('Failed to load orders:', data.message);
+          }
+        } catch (err) {
+          console.error('Failed to fetch orders:', err);
+        } finally {
+          setLoadingOrders(false);
+        }
+      };
+      fetchOrders();
+    }
+  }, [isLoggedIn]);
+
 
   // Search for order by ID (guest mode)
   const handleSearch = async () => {
@@ -30,7 +61,13 @@ export default function OrderPage() {
     if (!orderIdInput) return;
 
     try {
-      const res = await fetch(`/api/orders/${orderIdInput}`);
+      const token = Cookies.get('token');
+      if (!token) {
+        // If no token (guest), clear token from cookie just in case
+        Cookies.remove('token');
+      }
+
+      const res = await fetch(`/api/orders_api/${orderIdInput}`);
       if (!res.ok) throw new Error("Order not found");
 
       // ✅ If order exists, redirect to details page
@@ -60,7 +97,7 @@ export default function OrderPage() {
                   <div style={{ textAlign: "right" }}>
                     <div>Total: ${order.total.toFixed(2)}</div>
                     <button
-                      onClick={() => setOrderResult(order)} // show static details
+                      onClick={() => router.push(`/user/order-details?orderId=${order.id}`)}
                       style={buttonStyle}
                     >
                       View Details

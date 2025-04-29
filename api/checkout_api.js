@@ -1,8 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../db/connection'); 
+const { pool } = require('../db/connection');
+const jwt = require('jsonwebtoken');
 
-// POST /api/checkout_api
+// Helper: fetch product prices
+async function fetchProductPrices(productIds) {
+  const { rows } = await pool.query(
+    `SELECT id, price FROM products WHERE id = ANY($1)`,
+    [productIds]
+  );
+  return new Map(rows.map(p => [p.id, p.price]));
+}
+
+// POST /api/checkout
 router.post('/', async (req, res) => {
   const {
     name,
@@ -26,26 +36,55 @@ router.post('/', async (req, res) => {
   }
 
   try {
-    // Optionally, you might insert the order into the database here using transactions.
-    // For this demo, we'll simulate order creation and generate a fake orderId.
-    const orderId = Math.floor(Math.random() * 1000000); // simulate a unique order ID
+    // Try to read token and extract user ID
+    let userId = null;
+    const token = req.cookies?.token;
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.sub;
+      } catch (err) {
+        console.warn("Invalid token, proceeding as guest checkout");
+        // If the token is wrong, proceed as a guest
+      }
+    }
 
-    // If you were inserting into your orders table, you might do something like:
-    /*
-    const orderInsertQuery = `
-      INSERT INTO orders (name, shipping_address, billing_address, total, created_at)
-      VALUES ($1, $2, $3, $4, NOW()) RETURNING id;
-    `;
-    const total = items.reduce((sum, item) => sum + (item.quantity * 100), 0); // For example
-    const orderResult = await pool.query(orderInsertQuery, [name, shippingAddress, billingAddress, total]);
-    const orderId = orderResult.rows[0].id;
-    // And then insert order items into order_items table.
-    */
-    
-    // Simulate a delay if needed (e.g., to mimic verification/processing time)
-    setTimeout(() => {
-      res.status(200).json({ success: true, orderId });
-    }, 500);    
+    // Lookup product prices
+    const productIds = items.map(i => i.productId);
+    const priceMap = await fetchProductPrices(productIds);
+
+    // Calculate total price
+    let total = 0;
+    for (const { productId, quantity } of items) {
+      const price = priceMap.get(productId);
+      if (price == null) {
+        return res.status(400).json({ success: false, message: `Product ${productId} not found` });
+      }
+      total += Number(price) * quantity;
+    }
+
+    // Insert into orders table
+    const { rows: [order] } = await pool.query(
+      `INSERT INTO orders (user_id, total_price)
+      VALUES ($1, $2)
+      RETURNING id`,
+      [userId, total]
+    );
+
+    // Insert order items
+    await Promise.all(
+      items.map(({ productId, quantity }) =>
+        pool.query(
+          `INSERT INTO order_items (order_id, product_id, quantity, price)
+           VALUES ($1, $2, $3, $4)`,
+          [order.id, productId, quantity, priceMap.get(productId)]
+        )
+      )
+    );
+
+    // Return success with the new order ID
+    res.status(200).json({ success: true, orderId: order.id });
+
   } catch (err) {
     console.error("Error in checkout_api:", err);
     res.status(500).json({ success: false, message: "Internal Server Error." });

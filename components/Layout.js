@@ -39,7 +39,7 @@ export default function Layout({ children }) {
               <a className={styles.navLink}>Cart</a>
             </Link>
             {user && (
-              <Link href="/user/dashboard" legacyBehavior>
+              <Link href={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'} legacyBehavior>
                 <a className={styles.navLink}>Dashboard</a>
               </Link>
             )}
