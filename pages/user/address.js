@@ -34,7 +34,7 @@ export default function AddressBook() {
   };
 
   const handleAdd = async () => {
-    if (!form.name || !form.address || !form.phone) return;
+    if (!form.name || !form.address) return;
     try {
       const res = await fetch('/api/addresses', {
         method: 'POST',
