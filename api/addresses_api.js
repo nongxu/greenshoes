@@ -23,9 +23,7 @@ router.get('/', async (req, res) => {
     );
 
     const addresses = rows[0]?.address
-      ? Array.isArray(rows[0].address)
-        ? rows[0].address
-        : [rows[0].address]
+      ? (typeof rows[0].address === 'string' ? JSON.parse(rows[0].address) : rows[0].address)
       : [];
 
     return res.json(addresses);
@@ -54,15 +52,28 @@ router.post('/', async (req, res) => {
       'SELECT address FROM users WHERE id = $1',
       [userId]
     );
-    let existing = rows[0]?.address || [];
 
-    if (!Array.isArray(existing)) existing = [existing];
-    existing.push({ name, address, phone });
+    // Parse json address
+    let list = [];
+    if (rows[0]?.address) {
+      if (typeof rows[0].address === 'string') {
+        try {
+          list = JSON.parse(rows[0].address);
+        } catch (err) {
+          console.error('Failed to parse address JSON', err);
+          return res.status(500).json({ message: 'Invalid address data' });
+        }
+      } else {
+        list = rows[0].address;
+      }
+    }
+    
+    list.push({ name, address, phone });
 
     // Save back
     await pool.query(
       'UPDATE users SET address = $1 WHERE id = $2',
-      [existing, userId]
+      [JSON.stringify(list), userId]
     );
 
     return res.status(201).json({ name, address, phone });
@@ -90,17 +101,28 @@ router.delete('/:idx', async (req, res) => {
       'SELECT address FROM users WHERE id = $1',
       [userId]
     );
-    let list = rows[0]?.address || [];
-    if (!Array.isArray(list)) list = [list];
-
-    if (idx < 0 || idx >= list.length) {
-      return res.status(404).json({ message: 'Address not found' });
+    
+    // Parse json address
+    let list = [];
+    if (rows[0]?.address) {
+      if (typeof rows[0].address === 'string') {
+        try {
+          list = JSON.parse(rows[0].address);
+        } catch (err) {
+        console.error('Failed to parse address JSON', err);
+        return res.status(500).json({ message: 'Invalid address data' });
+        }
+      } else {
+        list = rows[0].address;
+      }
     }
 
     list.splice(idx, 1);
+
+    // Delete
     await pool.query(
       'UPDATE users SET address = $1 WHERE id = $2',
-      [list, userId]
+      [JSON.stringify(list), userId]
     );
 
     return res.sendStatus(204);

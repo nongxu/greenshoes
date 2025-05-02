@@ -1,7 +1,12 @@
-import { useState } from "react";
+// pages/orders.js
+import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
 import Layout from "../components/Layout";
+import Cookies from 'js-cookie';
 
 export default function OrderPage() {
+  const router = useRouter();
+
   // Simulated login state (you can replace with real auth later)
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
@@ -14,23 +19,59 @@ export default function OrderPage() {
   // Error message if order not found
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Simulated user's past orders (only used when logged in)
-  const [userOrders, setUserOrders] = useState([
-    { id: 101, date: "2025-03-20", total: 59.98, status: "Delivered" },
-    { id: 102, date: "2025-03-25", total: 99.49, status: "Processing" }
-  ]);
+  // List of user's orders if logged in
+  const [userOrders, setUserOrders] = useState([]);
+
+  // Loading state for fetching user orders
+  const [loadingOrders, setLoadingOrders] = useState(false);
+
+  // Check if user is logged in by checking token in cookies
+  useEffect(() => {
+    const token = Cookies.get('token');
+    setIsLoggedIn(!!token);
+  }, []);
+
+  // Fetch user order history when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      const fetchOrders = async () => {
+        setLoadingOrders(true);
+        try {
+          const res = await fetch('/api/orders_api');
+          const data = await res.json();
+          if (res.ok) {
+            setUserOrders(data.orders);
+          } else {
+            console.error('Failed to load orders:', data.message);
+          }
+        } catch (err) {
+          console.error('Failed to fetch orders:', err);
+        } finally {
+          setLoadingOrders(false);
+        }
+      };
+      fetchOrders();
+    }
+  }, [isLoggedIn]);
+
 
   // Search for order by ID (guest mode)
   const handleSearch = async () => {
     setErrorMsg("");
-    setOrderResult(null);
     if (!orderIdInput) return;
 
     try {
-      const res = await fetch(`/api/orders/${orderIdInput}`);
+      const token = Cookies.get('token');
+      if (!token) {
+        // If no token (guest), clear token from cookie just in case
+        Cookies.remove('token');
+      }
+
+      const res = await fetch(`/api/orders_api/${orderIdInput}`);
       if (!res.ok) throw new Error("Order not found");
-      const data = await res.json();
-      setOrderResult(data);
+
+      // ✅ If order exists, redirect to details page
+      router.push(`/user/order-details?orderId=${orderIdInput}`);
     } catch (err) {
       setErrorMsg("Order not found. Please check the order ID.");
     }
@@ -56,7 +97,7 @@ export default function OrderPage() {
                   <div style={{ textAlign: "right" }}>
                     <div>Total: ${order.total.toFixed(2)}</div>
                     <button
-                      onClick={() => setOrderResult(order)} // show static details
+                      onClick={() => router.push(`/user/order-details?orderId=${order.id}`)}
                       style={buttonStyle}
                     >
                       View Details
@@ -84,24 +125,7 @@ export default function OrderPage() {
           </>
         )}
 
-        {/* Order result (either from button or search) */}
-        {orderResult && (
-          <div style={{ marginTop: "30px" }}>
-            <h3 style={{ fontSize: "18px", marginBottom: "10px" }}>
-              Order #{orderResult.id} Details
-            </h3>
-            <p>Date: {orderResult.date}</p>
-            <p>Status: {orderResult.status}</p>
-            <ul>
-              {orderResult.items.map((item, idx) => (
-                <li key={idx}>
-                  {item.name} x {item.quantity} = ${(item.price * item.quantity).toFixed(2)}
-                </li>
-              ))}
-            </ul>
-            <p style={{ fontWeight: "bold" }}>Total: ${orderResult.total.toFixed(2)}</p>
-          </div>
-        )}
+        {/* No need to render inline result since we redirect on success */}
       </div>
     </Layout>
   );

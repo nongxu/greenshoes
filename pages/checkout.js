@@ -77,33 +77,33 @@ export default function Checkout() {
     // Prepare payload to send
     const payload = {
       name: userData.name,
+      phone: userData.phone,
       shippingAddress: userData.address,
       billingAddress: userData.billingAddress,
-      phone: userData.phone, 
       cardNumber: userData.cardNumber,
       expiration: userData.expiration,
       cvc: userData.cvc,
       items: cartItems.map((item) => ({
-        id: item.id,
+        productId: item.id,
         quantity: item.quantity,
       })),
     };
-    
-  
+
+    // /api/orders
     try {
-      const res = await fetch("/api/checkout_api", {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
   
       const data = await res.json();
-      if (data.success) {
+      if (res.ok) {
         
         // ✅ Send to inventory_api, reduce inventory
         for (const item of cartItems) {
           try {
-            await fetch("/api/inventory_api", {
+            await fetch("/api/inventory", {
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({

@@ -15,7 +15,7 @@ export default function Dashboard() {
     if (!user) return;
     (async () => {
       try {
-        const res = await fetch('/api/orders', {
+        const res = await fetch('/api/orders_api', {
           credentials: 'include'
         });
         if (!res.ok) throw new Error();
@@ -43,15 +43,15 @@ export default function Dashboard() {
               <p>No orders yet.</p>
             ) : (
               <ul className={styles.list}>
-                {orders.map(o => (
-                  <li key={o.id} className={styles.item}>
+                {orders.map(order => (
+                  <li key={order.id} className={styles.item}>
                     <div>
-                      <strong>Order #{o.id}</strong><br/>
-                      Date: {o.date}<br/>
-                      Status: {o.status}<br/>
-                      Total: ${o.total.toFixed(2)}
+                      <strong>Order #{order.id}</strong><br/>
+                      Date: {order.createdAt}<br/>
+                      Status: {order.status}<br/>
+                      Total: ${Number(order.totalPrice).toFixed(2)}
                     </div>
-                    <Link href={`/orders/${o.id}`}>
+                    <Link href={`/user/order-details?orderId=${order.id}`}>
                       <button className={styles.viewBtn}>
                         View Details
                       </button>

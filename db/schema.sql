@@ -43,7 +43,7 @@ CREATE TABLE product_images (
 -- Table: orders
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL,
+    user_id UUID, -- null allowed for guest
     total_price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     order_status VARCHAR NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT now(),

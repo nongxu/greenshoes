@@ -75,7 +75,8 @@ export async function getServerSideProps() {
           WHERE product_id = products.id AND is_primary = true 
           LIMIT 1
         ) as image_url 
-      FROM products 
+      FROM products
+      WHERE stock_quantity > 0
       ORDER BY RANDOM() 
       LIMIT 3
     `;
