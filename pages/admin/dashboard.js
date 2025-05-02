@@ -1,229 +1,211 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import jwt from 'jsonwebtoken';
 import cookie from 'cookie';
 import Layout from '../../components/Layout';
 
 export default function AdminDashboard({ user }) {
-  const [productName, setProductName] = useState('');
-  const [price, setPrice] = useState('');
-  const [images, setImages] = useState(['']);
-  const [sizes, setSizes] = useState({ S: 0, M: 0, L: 0, XL: 0 });
+  const [mode, setMode] = useState('list');
+  const [products, setProducts] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [formValues, setFormValues] = useState({
+    name: '',
+    description: '',
+    price: '',
+    shoe_category: '',
+    stock_quantity: '',
+    image: ''
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const handleImageChange = (idx, val) => {
-    const arr = [...images];
-    arr[idx] = val;
-    setImages(arr);
-  };
-
-  const addImageField = () => setImages([...images, '']);
-
-  const removeImageField = idx =>
-    setImages(images.filter((_, i) => i !== idx));
-
-  const handleSizeChange = (key, val) =>
-    setSizes(prev => ({ ...prev, [key]: Number(val) }));
-
-  const handleCreateProduct = async e => {
-    e.preventDefault();
-
-    const newProduct = {
-      name: productName,
-      price: parseFloat(price),
-      description: '', // optional, placeholder
-      stock_quantity: Object.values(sizes).reduce((sum, qty) => sum + qty, 0),
-      shoe_category: 'Sneakers' // placeholder category
-    };
-
+  useEffect(() => { fetchProducts(); }, []);
+  async function fetchProducts() {
     try {
-      const res = await fetch('/api/products-management', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newProduct)
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.error || 'Failed to create product');
-      }
-
-      alert('Product created successfully!');
-      console.log('Created product:', result.product);
-    } catch (err) {
-      console.error('Product creation failed:', err);
-      alert(err.message);
+      const res = await fetch('/api/products');
+      const data = await res.json();
+      setProducts(data);
+    } catch {
+      alert('Failed to fetch products');
     }
+  }
 
-    // Clear form
-    setProductName('');
-    setPrice('');
-    setImages(['']);
-    setSizes({ S: 0, M: 0, L: 0, XL: 0 });
-  };
+  const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIdx = (currentPage - 1) * itemsPerPage;
+  const currentItems = filtered.slice(startIdx, startIdx + itemsPerPage);
+
+  const handleChange = (k, v) => setFormValues(prev => ({ ...prev, [k]: v }));
+
+  function prepareCreate() {
+    setFormValues({ name: '', description: '', price: '', shoe_category: '', stock_quantity: '', image: '' });
+    setSelectedProduct(null);
+    setMode('create');
+  }
+
+  async function prepareEdit(p) {
+    try {
+      const res = await fetch(`/api/product/${p.id}`);
+      if (!res.ok) throw new Error();
+      const detail = await res.json();
+      setSelectedProduct(detail);
+      setFormValues({
+        name: detail.name,
+        description: detail.description || '',
+        price: detail.price,
+        shoe_category: detail.shoe_category,
+        stock_quantity: detail.stockQuantity || detail.stock_quantity || '',
+        image: detail.image || ''
+      });
+      setMode('edit');
+    } catch {
+      alert('Failed to load product');
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    const payload = {
+      name: formValues.name,
+      description: formValues.description,
+      price: parseFloat(formValues.price),
+      stock_quantity: Number(formValues.stock_quantity),
+      shoe_category: formValues.shoe_category
+    };
+    const endpoint = mode === 'create'
+      ? '/api/products-management'
+      : `/api/products-management/${selectedProduct.id}`;
+    const method = mode === 'create' ? 'POST' : 'PATCH';
+    try {
+      const res = await fetch(endpoint, {
+        method,
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error();
+      fetchProducts();
+      setMode('list');
+      alert(mode === 'create' ? 'Created' : 'Updated');
+    } catch {
+      alert('Save failed');
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm('Confirm delete?')) return;
+    try {
+      const res = await fetch(`/api/products-management/${selectedProduct.id}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) throw new Error();
+      fetchProducts();
+      setMode('list');
+      alert('Deleted');
+    } catch {
+      alert('Delete failed');
+    }
+  }
+
+  const goToPage = num => { if (num >= 1 && num <= totalPages) setCurrentPage(num); };
 
   return (
     <Layout>
-      <div style={{ padding: '20px' }}>
-        <h1>Admin Dashboard</h1>
-        <p>Welcome back, {user.name}. Manage your site from here.</p>
+      <div className="dashboard">
+        <header className="header">
+          <h1>Admin Dashboard</h1>
+          <span>Hello, {user.name}</span>
+        </header>
 
-        <section style={sectionStyle}>
-          <h2>Create New Product</h2>
-          <form onSubmit={handleCreateProduct} style={formStyle}>
-            <label style={labelStyle}>Product Name:</label>
-            <input
-              type="text"
-              value={productName}
-              onChange={e => setProductName(e.target.value)}
-              required
-              style={inputStyle}
-            />
-
-            <label style={labelStyle}>Price:</label>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={price}
-              onChange={e => setPrice(e.target.value)}
-              required
-              style={inputStyle}
-            />
-
-            <label style={labelStyle}>Images (1 or more):</label>
-            {images.map((img, idx) => (
-              <div key={idx} style={{ marginBottom: '8px' }}>
-                <input
-                  type="text"
-                  placeholder="Image URL"
-                  value={img}
-                  onChange={e => handleImageChange(idx, e.target.value)}
-                  style={{ ...inputStyle, marginBottom: '4px' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeImageField(idx)}
-                  disabled={images.length === 1}
-                  style={removeButtonStyle}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addImageField}
-              style={addButtonStyle}
-            >
-              + Add Another Image
-            </button>
-
-            <label style={labelStyle}>Sizes and Quantities:</label>
-            <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-              {Object.keys(sizes).map(key => (
-                <div key={key}>
-                  <strong>{key}:</strong>
-                  <input
-                    type="number"
-                    min="0"
-                    value={sizes[key]}
-                    onChange={e => handleSizeChange(key, e.target.value)}
-                    style={{ width: '60px', marginLeft: '5px' }}
-                  />
-                </div>
-              ))}
+        {mode === 'list' && (
+          <section>
+            <div className="toolbar">
+              <input
+                className="input"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              />
+              <button className="btn primary" onClick={prepareCreate}>+ New</button>
             </div>
+            <ul className="list">
+              {currentItems.map(p => (
+                <li key={p.id} className="list-item" onClick={() => prepareEdit(p)}>
+                  <span className="item-name">{p.name}</span>
+                  <span className="item-category">{p.shoe_category}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="pagination">
+              <button disabled={currentPage === 1} onClick={() => goToPage(currentPage - 1)}>Prev</button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button key={i + 1} className={currentPage === i + 1 ? 'active' : ''} onClick={() => goToPage(i + 1)}>{i + 1}</button>
+              ))}
+              <button disabled={currentPage === totalPages} onClick={() => goToPage(currentPage + 1)}>Next</button>
+            </div>
+          </section>
+        )}
 
-            <button type="submit" style={submitButtonStyle}>
-              Create Product
-            </button>
-          </form>
-        </section>
+        {(mode === 'create' || mode === 'edit') && (
+          <section className="form-container">
+            <h2>{mode === 'create' ? 'Create Product' : 'Edit Product'}</h2>
+            {formValues.image && (
+              <div className="image-preview">
+                <img src={formValues.image} alt="Preview" />
+              </div>
+            )}
+            <form onSubmit={handleSubmit} className="form-grid">
+              <div className="form-group"><label>Name</label><input className="input" required value={formValues.name} onChange={e => handleChange('name', e.target.value)} /></div>
+              <div className="form-group"><label>Description</label><textarea className="textarea" value={formValues.description} onChange={e => handleChange('description', e.target.value)} /></div>
+              <div className="form-group"><label>Price</label><input type="number" step="0.01" className="input" required value={formValues.price} onChange={e => handleChange('price', e.target.value)} /></div>
+              <div className="form-group"><label>Category</label><input className="input" value={formValues.shoe_category} onChange={e => handleChange('shoe_category', e.target.value)} /></div>
+              <div className="form-group"><label>Stock Quantity</label><input type="number" className="input" required value={formValues.stock_quantity} onChange={e => handleChange('stock_quantity', e.target.value)} /></div>
+              <div className="form-group full"><label>Image URL</label><input className="input" value={formValues.image} onChange={e => handleChange('image', e.target.value)} /></div>
+              <div className="buttons">
+                {mode === 'edit' && <button type="button" className="btn danger" onClick={handleDelete}>Delete</button>}
+                <button type="button" className="btn" onClick={() => setMode('list')}>Cancel</button>
+                <button type="submit" className="btn primary">{mode === 'create' ? 'Create' : 'Update'}</button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        <style jsx>{`
+          .dashboard { padding: 20px; max-width: 700px; margin: 0 auto; }
+          .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: Arial, sans-serif; }
+          .toolbar { display: flex; gap: 10px; margin-bottom: 20px; }
+          .input, .textarea { width: 100%; padding: 8px; border: 1px solid #aaa; border-radius: 4px; font-size: 14px; }
+          .textarea { resize: vertical; height: 80px; }
+          .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+          .btn.primary { background: #0070f3; color: #fff; }
+          .btn.danger { background: #d32f2f; color: #fff; }
+          .list { list-style: none; padding: 0; margin: 0; }
+          .list-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #eee; cursor: pointer; font-family: Arial, sans-serif; }
+          .list-item:hover { background: #f5f5f5; }
+          .item-name { font-weight: bold; }
+          .item-category { font-style: italic; color: #666; }
+          .pagination { display: flex; gap: 5px; justify-content: center; margin-top: 15px; }
+          .pagination button { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+          .pagination button.active { background: #0070f3; color: #fff; border-color: #0070f3; }
+          .form-container { border: 1px solid #ccc; border-radius: 8px; padding: 20px; margin-top: 20px; font-family: Arial, sans-serif; }
+          .image-preview { text-align: center; margin-bottom: 15px; }
+          .image-preview img { max-width: 200px; max-height: 200px; border: 1px solid #ccc; border-radius: 4px; }
+          .form-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+          .form-group { display: flex; flex-direction: column; }
+          .form-group.full { grid-column: span 1; }
+          .buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        `}</style>
       </div>
     </Layout>
   );
 }
 
-// Protect this page on the server side
 export async function getServerSideProps({ req }) {
   const { token } = cookie.parse(req.headers.cookie || '');
-  if (!token) {
-    return { redirect: { destination: '/signin', permanent: false } };
-  }
-
+  if (!token) return { redirect: { destination: '/signin', permanent: false } };
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
-    if (payload.role !== 'admin') {
-      return { redirect: { destination: '/signin', permanent: false } };
-    }
-
-    return {
-      props: {
-        user: {
-          id: payload.sub,
-          name: 'Admin',
-          email: payload.email,
-          role: payload.role
-        }
-      }
-    };
-  } catch (err) {
+    const p = jwt.verify(token, process.env.JWT_SECRET);
+    if (p.role !== 'admin') return { redirect: { destination: '/signin', permanent: false } };
+    return { props: { user: { id: p.sub, name: 'Admin', email: p.email, role: p.role } } };
+  } catch {
     return { redirect: { destination: '/signin', permanent: false } };
   }
 }
-
-// ——— Inline styles ———
-const sectionStyle = {
-  border: '1px solid #ddd',
-  borderRadius: '8px',
-  padding: '20px',
-  marginTop: '30px',
-  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-};
-
-const formStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '15px',
-  marginTop: '20px'
-};
-
-const labelStyle = { fontWeight: 'bold' };
-
-const inputStyle = {
-  padding: '8px',
-  borderRadius: '4px',
-  border: '1px solid #ccc',
-  width: '100%'
-};
-
-const submitButtonStyle = {
-  padding: '10px 16px',
-  backgroundColor: '#28a745',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer'
-};
-
-const addButtonStyle = {
-  padding: '8px 16px',
-  backgroundColor: '#28a745',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer'
-};
-
-const removeButtonStyle = {
-  marginLeft: '8px',
-  padding: '8px 16px',
-  backgroundColor: '#28a745',
-  color: '#fff',
-  border: 'none',
-  borderRadius: '4px',
-  cursor: 'pointer'
-};
