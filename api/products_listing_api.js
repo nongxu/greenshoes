@@ -5,7 +5,7 @@ const { pool } = require('../db/connection');
 router.get('/', async (req, res) => {
   try {
     const client = await pool.connect();
-    const query = `
+    let query = `
       SELECT 
         p.id,
         p.name,
@@ -23,7 +23,30 @@ router.get('/', async (req, res) => {
       ON 
         p.id = pi.product_id AND pi.is_primary = true
     `;
-    const result = await client.query(query);
+    
+    const params = [];
+    const conditions = [];
+    
+    // Handle exclude parameter
+    if (req.query.exclude) {
+      conditions.push(`p.id <> $${params.length + 1}`);
+      params.push(req.query.exclude);
+    }
+    
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
+    }
+    
+    // Order results randomly
+    query += " ORDER BY random()";
+    
+    // Handle limit parameter
+    if (req.query.limit) {
+      query += ` LIMIT $${params.length + 1}`;
+      params.push(req.query.limit);
+    }
+    
+    const result = await client.query(query, params);
     client.release();
     res.status(200).json(result.rows);
   } catch (error) {
