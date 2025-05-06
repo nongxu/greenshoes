@@ -43,6 +43,11 @@ router.post('/', async (req, res) => {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         userId = decoded.sub;
+        const { role } = jwt.verify(token, process.env.JWT_SECRET);
+        if ( role === 'admin' ) {
+          return res.status(403).json({ success: false, message: "Admin cannot checkout." });
+
+        } 
       } catch (err) {
         console.warn("Invalid token, proceeding as guest checkout");
         // If the token is wrong, proceed as a guest
