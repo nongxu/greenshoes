@@ -224,7 +224,7 @@ export async function getServerSideProps({ query }) {
     return { props: { products: productsWithImages, onsale, selectedCategory } };
   } catch (error) {
     console.error(error);
-    return { props: { products: [], onsalse: [] } };
+    return { props: { products: [], onsale: [] } };
   }
 }
 

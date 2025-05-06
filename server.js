@@ -13,7 +13,6 @@ const server = express();
 async function startServer() {
     await connectDB();      // Establishing a database connection
     await insertAdmin();    // Insert admin, enable admin login
-
     server.use(express.json());
     server.use(cookieParser());
 
