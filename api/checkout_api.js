@@ -82,6 +82,13 @@ router.post('/', async (req, res) => {
       )
     );
 
+    // Insert into user_order_history
+    await pool.query(
+      `INSERT INTO user_order_history (user_id, order_id, status)
+       VALUES ($1, $2, $3)`,
+      [userId, order.id, order.order_status || 'pending']
+    );
+    
     // Return success with the new order ID
     res.status(200).json({ success: true, orderId: order.id });
 
