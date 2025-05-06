@@ -2,10 +2,26 @@ import React from 'react';
 import Layout from '../components/Layout';
 import Link from 'next/link';
 import Slider from "react-slick";
-
+import { useRouter } from 'next/router';
 // Import slick carousel styles
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
+
+const ALL_CATEGORIES = [ 'Sneakers', 'Sandals', 'Boots', 'Loafers', 'Heels' ];
+
+const saleSettings = {
+  dots: false,
+  infinite: true,
+  speed: 500,
+  slidesToShow: 4,
+  slidesToScroll: 1,
+  arrows: true,
+  responsive: [
+    { breakpoint: 1024, settings: { slidesToShow: 3 } },
+    { breakpoint: 768,  settings: { slidesToShow: 2 } },
+    { breakpoint: 480,  settings: { slidesToShow: 1 } },
+  ]
+};
 
 const ImageSlider = () => {
     const settings = {
@@ -96,19 +112,78 @@ const ImageSlider = () => {
     </div>
   );
 
-const ProductListing = ({ products }) => {
-  // Assuming products have an isAccessory property for filtering
-  const clothingProducts = products.filter(
-    product => !product.isAccessory && product.stock_quantity > 0   // Filter products with 0 stock
-  );  
+const ProductListing = ({ products, onsale, selectedCategory }) => {
+  const router = useRouter();
+  // first drop out accessories & OOS
+  const clothingProducts = products.filter(p => !p.isAccessory && p.stock_quantity > 0);
+  // then apply category if one is selected
+  const filteredProducts = selectedCategory
+    ? clothingProducts.filter(p => p.shoe_category === selectedCategory)
+    : clothingProducts;
 
   return (
     <Layout>
       <div style={{ background: '#fff', minHeight: '100vh' }}>
-        {/* Slider at top */}
-        <ImageSlider />
+      <nav style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '12px',
+          margin: '20px 0'
+        }}>
+          <Link legacyBehavior href="/products-listing">
+            <a>
+              <button
+                style={{
+                  padding: '8px 16px',
+                  border: !selectedCategory ? '2px solid #333' : '1px solid #ccc',
+                  background: !selectedCategory ? '#eee' : '#fff',
+                  borderRadius: '4px'
+                }}
+              >All</button>
+            </a>
+          </Link>
+          {ALL_CATEGORIES.map(cat => (
+            <Link legacyBehavior key={cat} href={`/products-listing?category=${cat}`}>
+              <a>
+                <button
+                  style={{
+                    padding: '8px 16px',
+                    border: selectedCategory === cat ? '2px solid #333' : '1px solid #ccc',
+                    background: selectedCategory === cat ? '#eee' : '#fff',
+                    borderRadius: '4px'
+                  }}
+                >
+                  {cat}
+                </button>
+              </a>
+            </Link>
+          ))}
+        </nav>
+        { !selectedCategory && (
+          <>
+            {/* Slider at top */}
+            <ImageSlider />
+
+            {/* On Sale slider */}
+            <div 
+              className="on-sale-section" 
+              style={{ maxWidth: '800px', margin: '20px auto', padding: '20px 0' }}
+            >
+              <h2 style={{ textAlign: 'center', marginBottom: '10px' }}>On Sale</h2>
+              <Slider {...saleSettings}>
+                {onsale.map(product => (
+                  <div key={product.id} style={{ padding: '0 8px' }}>
+                    <div style={{ width: '150px', margin: '0 auto' }}>
+                      <ProductCard product={product} />
+                    </div>
+                  </div>
+                ))}
+              </Slider>
+            </div>
+          </>
+        )}
         <h2 style={{ margin: '20px', textAlign: 'center' }}>
-          Eco-friendly shoes for Men & Women
+          Eco-friendly shoes for {selectedCategory || 'Men & Women'}
         </h2>
         <div
           style={{
@@ -120,7 +195,7 @@ const ProductListing = ({ products }) => {
             padding: '20px',
           }}
         >
-          {clothingProducts.map(product => (
+          {filteredProducts.map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
@@ -129,12 +204,12 @@ const ProductListing = ({ products }) => {
   );
 };
 
-export async function getServerSideProps() {
+export async function getServerSideProps({ query }) {
   try {
-    const res = await fetch(`${process.env.API_URL || 'http://localhost:3000'}/api/products`);
-    if (!res.ok) {
-      throw new Error('Failed to fetch products');
-    }
+    const baseUrl = process.env.API_URL || 'http://localhost:3000';
+    const qs = query.category ? `?category=${encodeURIComponent(query.category)}` : '';
+    const res = await fetch(`${baseUrl}/api/products${qs}`);
+    if (!res.ok) throw new Error('Failed to fetch products');
     const products = await res.json();
     
     // Assign a fallback image if one is missing (ensure images exist in public/images)
@@ -143,11 +218,13 @@ export async function getServerSideProps() {
       ...product,
       image: product.image || fallbackImages[Math.floor(Math.random() * fallbackImages.length)]
     }));
-
-    return { props: { products: productsWithImages } };
+    const shuffled = [...productsWithImages].sort(() => Math.random() - 0.5);
+    const onsale = shuffled.slice(0, 6);
+    const selectedCategory = query.category || null;
+    return { props: { products: productsWithImages, onsale, selectedCategory } };
   } catch (error) {
     console.error(error);
-    return { props: { products: [] } };
+    return { props: { products: [], onsalse: [] } };
   }
 }
 
