@@ -1,18 +1,17 @@
 const express = require('express');
-const router = express.Router();
-const { pool } = require('../db/connection');
-const jwt = require('jsonwebtoken');
+const router  = express.Router();
+const { pool }= require('../db/connection');
+const jwt     = require('jsonwebtoken');
 
 // Helper: fetch product prices
-async function fetchProductPrices(productIds) {
-  const { rows } = await pool.query(
+async function fetchProductPrices(client, productIds) {
+  const { rows } = await client.query(
     `SELECT id, price FROM products WHERE id = ANY($1)`,
     [productIds]
   );
   return new Map(rows.map(p => [p.id, p.price]));
 }
 
-// POST /api/checkout
 router.post('/', async (req, res) => {
   const {
     name,
@@ -25,81 +24,111 @@ router.post('/', async (req, res) => {
     items
   } = req.body;
 
-  // Basic validation of required fields and items array
-  if (!name || !shippingAddress || !items || !Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ success: false, message: "Missing required fields or items." });
+  if (!name || !shippingAddress || !items?.length) {
+    return res.status(400).json({ success: false, message: 'Missing required fields or items.' });
   }
-
-  // Simulated card verification - for demo purposes only
   if (!cardNumber || cardNumber.length !== 16) {
-    return res.status(400).json({ success: false, message: "Invalid card information." });
+    return res.status(400).json({ success: false, message: 'Invalid card information.' });
   }
 
+  const client = await pool.connect();
   try {
-    // Try to read token and extract user ID
+    await client.query('BEGIN');
+
+    // auth / guest logic
     let userId = null;
     const token = req.cookies?.token;
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         userId = decoded.sub;
-        const { role } = jwt.verify(token, process.env.JWT_SECRET);
-        if ( role === 'admin' ) {
-          return res.status(403).json({ success: false, message: "Admin cannot checkout." });
-
-        } 
+        if (decoded.role === 'admin') {
+          throw { status: 403, message: 'Admin cannot checkout.' };
+        }
       } catch (err) {
-        console.warn("Invalid token, proceeding as guest checkout");
-        // If the token is wrong, proceed as a guest
+        console.warn('Proceeding as guest checkout');
       }
     }
 
-    // Lookup product prices
+    // prices & total
     const productIds = items.map(i => i.productId);
-    const priceMap = await fetchProductPrices(productIds);
-
-    // Calculate total price
+    const priceMap   = await fetchProductPrices(client, productIds);
     let total = 0;
     for (const { productId, quantity } of items) {
       const price = priceMap.get(productId);
       if (price == null) {
-        return res.status(400).json({ success: false, message: `Product ${productId} not found` });
+        throw { status: 400, message: `Product ${productId} not found` };
       }
       total += Number(price) * quantity;
     }
 
-    // Insert into orders table
-    const { rows: [order] } = await pool.query(
+    // lock & stock check per variant
+    for (const { variantId, quantity } of items) {
+      const { rows } = await client.query(
+        `SELECT stock_qty FROM product_variants WHERE id = $1 FOR UPDATE`,
+        [variantId]
+      );
+      if (!rows.length) {
+        throw { status: 400, message: `Variant ${variantId} not found` };
+      }
+      if (rows[0].stock_qty < quantity) {
+        throw {
+          status: 400,
+          message: `Insufficient stock for size (variant) ${variantId}: only ${rows[0].stock_qty} left`
+        };
+      }
+    }
+
+    // create order
+    const { rows: [order] } = await client.query(
       `INSERT INTO orders (user_id, total_price)
-      VALUES ($1, $2)
-      RETURNING id`,
+       VALUES ($1, $2)
+       RETURNING id, order_status`,
       [userId, total]
     );
 
-    // Insert order items
-    await Promise.all(
-      items.map(({ productId, quantity }) =>
-        pool.query(
-          `INSERT INTO order_items (order_id, product_id, quantity, price)
-           VALUES ($1, $2, $3, $4)`,
-          [order.id, productId, quantity, priceMap.get(productId)]
-        )
-      )
-    );
+    // insert order_items & decrement stock
+    for (const { productId, variantId, quantity } of items) {
+      const price = priceMap.get(productId);
+      await client.query(
+        `INSERT INTO order_items
+           (order_id, product_id, variant_id, quantity, price)
+         VALUES ($1,$2,$3,$4,$5)`,
+        [order.id, productId, variantId, quantity, price]
+      );
+      const { rowCount } = await client.query(
+        `UPDATE product_variants
+           SET stock_qty = stock_qty - $1
+         WHERE id = $2
+           AND stock_qty >= $1`,
+        [quantity, variantId]
+      );
 
-    // Insert into user_order_history
-    await pool.query(
-      `INSERT INTO user_order_history (user_id, order_id, status)
-       VALUES ($1, $2, $3)`,
-      [userId, order.id, order.order_status || 'pending']
-    );
+      if (rowCount === 0) {
+        throw {
+          status: 400,
+          message: `Insufficient stock for variant ${variantId}`
+        };
+      }
+    }
+
+    // record in user_order_history
+    if(userId){
+      await client.query(
+        `INSERT INTO user_order_history (user_id, order_id, status)
+         VALUES ($1,$2,$3)`,
+        [userId, order.id, order.order_status || 'pending']
+      );
+    }
     
-    // Return success with the new order ID
+    await client.query('COMMIT');
     res.status(200).json({ success: true, orderId: order.id });
-
   } catch (err) {
-    console.error("Error in checkout_api:", err);
-    res.status(500).json({ success: false, message: "Internal Server Error." });
+    await client.query('ROLLBACK');
+    console.error('Error in checkout_api:', err);
+    res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error.' });
+  } finally {
+    client.release();
   }
 });
 

@@ -8,12 +8,12 @@ async function fetchItems(orderId) {
   const { rows } = await pool.query(
     `SELECT
        oi.id,
-       oi.product_id AS "productId",
-       p.name        AS "productName",
+       oi.product_id   AS "productId",
+       pv.size         AS size,
        oi.quantity,
        oi.price
      FROM order_items oi
-     JOIN products p ON p.id = oi.product_id
+     JOIN product_variants pv ON pv.id = oi.variant_id
      WHERE oi.order_id = $1`,
     [orderId]
   );

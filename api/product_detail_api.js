@@ -1,41 +1,50 @@
 const express = require('express');
 const router = express.Router();
-const { pool } = require('../db/connection'); 
+const { pool } = require('../db/connection');
 
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
+  const client = await pool.connect();
   try {
-    const client = await pool.connect();
-
     const query = `
-      SELECT 
+      SELECT
         p.id,
         p.name,
         p.description,
-        p.price,
-        p.stock_quantity,
+        p.price::float       AS price,
         p.shoe_category,
         p.created_at,
         p.updated_at,
-        COALESCE(json_agg(pi.image_url ORDER BY pi.is_primary DESC) 
-          FILTER (WHERE pi.image_url IS NOT NULL), '[]'::json) AS images
+        -- images pulled in a subquery (no cross-join)
+        COALESCE((
+          SELECT json_agg(pi.image_url ORDER BY pi.is_primary DESC)
+          FROM product_images pi
+          WHERE pi.product_id = p.id
+        ), '[]') AS images,
+        -- variants pulled in a separate subquery
+        COALESCE((
+          SELECT json_agg(
+                   json_build_object(
+                     'id',    pv.id,
+                     'size',  pv.size,
+                     'stock', pv.stock_qty
+                   ) ORDER BY pv.size
+                 )
+          FROM product_variants pv
+          WHERE pv.product_id = p.id
+        ), '[]') AS variants
       FROM products p
-      LEFT JOIN product_images pi 
-        ON p.id = pi.product_id
       WHERE p.id = $1
-      GROUP BY p.id
       LIMIT 1;
     `;
-    const result = await client.query(query, [id]);
+    const { rows } = await client.query(query, [id]);
+    if (rows.length === 0) return res.status(404).json({ message: 'Not found' });
+    res.json(rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Internal error' });
+  } finally {
     client.release();
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    res.status(200).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
 });
 

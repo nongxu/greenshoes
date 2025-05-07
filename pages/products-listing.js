@@ -114,9 +114,9 @@ const ImageSlider = () => {
 
 const ProductListing = ({ products, onsale, selectedCategory }) => {
   const router = useRouter();
-  // first drop out accessories & OOS
-  const clothingProducts = products.filter(p => !p.isAccessory && p.stock_quantity > 0);
-  // then apply category if one is selected
+  const clothingProducts = products.filter(p =>
+    p.variants?.some(v => v.stock > 0)
+  );
   const filteredProducts = selectedCategory
     ? clothingProducts.filter(p => p.shoe_category === selectedCategory)
     : clothingProducts;

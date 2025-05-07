@@ -1,17 +1,17 @@
 // utils/cartUtils.js
 import Cookies from 'js-cookie'
 
-export function addToCart(product, quantity = 1) {
-  const existingCart = Cookies.get('cart')
-  let cart = existingCart ? JSON.parse(existingCart) : []
-
-  const existingItem = cart.find(item => item.id === product.id)
-
-  if (existingItem) {
-    existingItem.quantity += quantity
+export function addToCart(item, qty=1) {
+  const existing = Cookies.get('cart');
+  let cart = existing ? JSON.parse(existing) : [];
+  // match by product+variant
+  const idx = cart.findIndex(i => 
+    i.productId===item.productId && i.variantId===item.variantId
+  );
+  if (idx > -1) {
+    cart[idx].quantity += qty;
   } else {
-    cart.push({ ...product, quantity })
+    cart.push({ ...item, quantity: qty });
   }
-
-  Cookies.set('cart', JSON.stringify(cart), { expires: 7 })
+  Cookies.set('cart', JSON.stringify(cart), { expires:7 });
 }

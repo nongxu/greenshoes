@@ -65,21 +65,32 @@ export default function Home({ products }) {
 export async function getServerSideProps() {
   try {
     const query = `
-      SELECT id, name, price,
-        (SELECT image_url FROM product_images
-         WHERE product_id = products.id AND is_primary = true LIMIT 1)
-        AS image_url
-      FROM products
-      WHERE stock_quantity > 0
+      SELECT 
+        p.id,
+        p.name,
+        p.price::float AS price,
+        (SELECT pi.image_url 
+           FROM product_images pi 
+          WHERE pi.product_id = p.id 
+            AND pi.is_primary 
+          LIMIT 1
+        ) AS image_url
+      FROM products p
+      WHERE EXISTS (
+        SELECT 1 
+          FROM product_variants pv 
+         WHERE pv.product_id = p.id 
+           AND pv.stock_qty > 0
+      )
       ORDER BY RANDOM()
-      LIMIT 3
+      LIMIT 3;
     `;
     const client = await pool.connect();
     const { rows } = await client.query(query);
     client.release();
-    const products = rows.map(p => ({ ...p, price: parseFloat(p.price) }));
-    return { props: { products } };
-  } catch {
+    return { props: { products: rows } };
+  } catch (err) {
+    console.error(err);
     return { props: { products: [] } };
   }
 }

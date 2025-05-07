@@ -36,16 +36,16 @@ export default function CartPage() {
   }
 
   // Handle quantity changes (+/-)
-  const handleQuantityChange = (id, delta) => {
-    const updated = cartItems.map(item => {
-      if (item.id === id) {
-        const newQty = item.quantity + delta
-        return { ...item, quantity: newQty > 1 ? newQty : 1 }
+  const handleQuantityChange = (pid, vid, delta) => {
+    const updated = cartItems.map(i => {
+      if (i.productId === pid && i.variantId === vid) {
+        const q = Math.max(1, Math.min(i.stock, i.quantity + delta));
+        return { ...i, quantity: q };
       }
-      return item
-    })
-    updateCartCookie(updated)
-  }
+      return i;
+    });
+    updateCartCookie(updated);
+  };
 
   // Remove item from cart
   const handleRemove = (id) => {
@@ -83,12 +83,13 @@ export default function CartPage() {
                 <img src={item.image} alt={item.name} style={{ width: '100%', borderRadius: '8px' }} />
                 <h3 style={{ marginTop: '12px' }}>{item.name}</h3>
                 <p>Price: ${item.price}</p>
+                <p>Size: {item.size}</p>
 
                 {/* Quantity buttons */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <button onClick={() => handleQuantityChange(item.id, -1)} style={quantityButtonStyle}>-</button>
+                  <button onClick={() => handleQuantityChange(item.productId, item.variantId, -1)} style={quantityButtonStyle}>-</button>
                   <span>{item.quantity}</span>
-                  <button onClick={() => handleQuantityChange(item.id, 1)} style={quantityButtonStyle}>+</button>
+                  <button onClick={() => handleQuantityChange(item.productId, item.variantId, 1)} style={quantityButtonStyle}>+</button>
                 </div>
 
                 {/* Remove button */}

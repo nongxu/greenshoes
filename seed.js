@@ -6,14 +6,23 @@ const fs = require('fs');
 const path = require('path');
 
 async function clearData() {
-    try {
-        await pool.query('DELETE FROM product_images');
-        await pool.query('DELETE FROM products');
-        await pool.query('DELETE FROM users');
-        console.log('Cleared all data from product_images, products, and users tables');
-    } catch (err) {
-        console.error(`Error clearing data: ${err.message}`);
-    }
+  try {
+    // truncate in dependency order to avoid FK violations
+    await pool.query(`
+      TRUNCATE 
+        user_order_history,
+        order_items,
+        orders,
+        product_variants,
+        product_images,
+        products,
+        users
+      RESTART IDENTITY CASCADE;
+    `);
+    console.log('Cleared all data from user_order_history, order_items, orders, product_variants, product_images, products, users');
+  } catch (err) {
+    console.error(`Error clearing data: ${err.message}`);
+  }
 }
 
 
@@ -43,25 +52,43 @@ async function seedUsers(num = 10) {
 
 async function seedProducts(num = 10) {
     const insertProduct = `
-        INSERT INTO products (name, description, price, stock_quantity, shoe_category, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, now(), now())
-        RETURNING id;
+      INSERT INTO products
+        (name, description, price, shoe_category, created_at, updated_at)
+      VALUES ($1,$2,$3,$4, now(), now())
+      RETURNING id
     `;
+    const insertVariant = `
+      INSERT INTO product_variants (product_id, size, stock_qty)
+      VALUES ($1,$2,$3)
+    `;
+  
+    // possible sizes
+    const allSizes = ['6','7','8','9','10','11','12'];
+  
     for (let i = 0; i < num; i++) {
-        const name = faker.commerce.productName();
-        const description = faker.lorem.sentences();
-        const price = faker.commerce.price(20, 200, 2);
-        const stock_quantity = faker.number.int({ min: 0, max: 100 });
-        const shoe_category = faker.helpers.arrayElement(['Sneakers', 'Boots', 'Sandals', 'Heels']);
-
-        try {
-            const res = await pool.query(insertProduct, [name, description, price, stock_quantity, shoe_category]);
-            console.log(`Inserted product with id: ${res.rows[0].id}`);
-        } catch (err) {
-            console.error(`Error inserting product: ${err.message}`);
+      const name          = faker.commerce.productName();
+      const description   = faker.lorem.sentences(2);
+      const price         = faker.number.float({ min:20, max:200, precision:0.01 });
+      const shoe_category = faker.helpers.arrayElement(
+        ['Sneakers','Boots','Sandals','Heels']
+      );
+      try {
+        const { rows } = await pool.query(insertProduct,
+          [name, description, price, shoe_category]);
+        const productId = rows[0].id;
+  
+        // pick 4 distinct sizes
+        const sizes = faker.helpers.arrayElements(allSizes, 4);
+        for (const size of sizes) {
+          const stock_qty = faker.number.int({ min: 0, max: 50 });
+          await pool.query(insertVariant, [productId, size, stock_qty]);
         }
+        console.log(`Product ${productId} → variants: ${sizes.join(', ')}`);
+      } catch (err) {
+        console.error('Error inserting product:', err);
+      }
     }
-}
+  }
 
 async function seedProductImages() {
     const insertImageQuery = `

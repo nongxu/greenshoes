@@ -1,3 +1,14 @@
+DROP TABLE IF EXISTS
+  user_order_history,
+  order_items,
+  orders,
+  product_variants,
+  product_images,
+  products,
+  admins,
+  users
+CASCADE;
+
 -- Table: users
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,6 +51,15 @@ CREATE TABLE product_images (
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
+-- table to track stock per size
+CREATE TABLE product_variants (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  size       VARCHAR(20)    NOT NULL,
+  stock_qty  INT NOT NULL DEFAULT 0,
+  UNIQUE(product_id, size)
+);
+
 -- Table: orders
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,3 +91,6 @@ CREATE TABLE user_order_history (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
+
+ALTER TABLE order_items
+  ADD COLUMN variant_id UUID REFERENCES product_variants(id);

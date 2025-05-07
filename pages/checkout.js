@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
 import { useUserContext } from "../lib/UserContext";  // Import user context for auth info
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
@@ -117,7 +116,9 @@ export default function Checkout() {
       expiration: userData.expiration,
       cvc: userData.cvc,
       items: cartItems.map((item) => ({
-        productId: item.id,
+        productId: item.productId || item.id,
+        variantId: item.variantId,
+        size: item.size,
         quantity: item.quantity,
       })),
     };
@@ -186,10 +187,12 @@ export default function Checkout() {
           <h3 style={{ marginBottom: "10px", fontSize: "18px" }}>Your Items:</h3>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {cartItems.map((item) => (
-              <li key={item.id} style={{ marginBottom: "12px" }}>
+              <li key={`${item.productId}-${item.variantId}`} style={{ marginBottom: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span>
-                    {item.name} (x{item.quantity})
+                    {item.name}
+                    {item.size && ` — Size: ${item.size}`}
+                    {` (x${item.quantity})`}
                   </span>
                   <span>${(item.price * item.quantity).toFixed(2)}</span>
                 </div>

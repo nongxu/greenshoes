@@ -9,6 +9,15 @@ const app = next({ dev });
 const handle = app.getRequestHandler();
 
 const server = express();
+server.enable('trust proxy');
+server.use(express.json());
+server.use(cookieParser());
+server.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'production' && !req.secure) {
+      return res.redirect(`https://${req.headers.host}${req.url}`);
+    }
+    next();
+  });
 
 async function startServer() {
     await connectDB();      // Establishing a database connection

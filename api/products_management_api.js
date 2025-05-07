@@ -8,45 +8,73 @@ router.use(adminOnly);
 
 // Create a new product
 router.post('/', async (req, res) => {
-  const { name, description, price, stock_quantity, shoe_category } = req.body;
+  const { name, description, price, shoe_category, variants = [], images = [] } = req.body;
 
   if (
     !name ||
     typeof price !== 'number' ||
-    typeof stock_quantity !== 'number' ||
     !shoe_category
   ) {
     return res.status(400).json({
       error:
-        'Missing or invalid fields. Required: name (string), price (number), stock_quantity (number), shoe_category (string)',
+        'Missing or invalid fields. Required: name (string), price (number), shoe_category (string)',
     });
   }
 
+  const client = await pool.connect();
   try {
-    const { rows: [product] } = await pool.query(
-      `INSERT INTO products
-         (name, description, price, stock_quantity, shoe_category)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING
-         id, name, description, price,
-         stock_quantity AS "stockQuantity",
-         shoe_category AS "shoeCategory",
-         created_at AS "createdAt",
-         updated_at AS "updatedAt"`,
-      [name, description, price, stock_quantity, shoe_category]
+    await client.query('BEGIN');
+    const { rows: [product] } = await client.query(
+      `INSERT INTO products (name,description,price,shoe_category)
+         VALUES ($1,$2,$3,$4)
+       RETURNING id`,
+      [name, description, price, shoe_category]
     );
-
-    res.status(201).json({ product });
+    // insert variants
+    for (const v of variants) {
+      await client.query(
+        `INSERT INTO product_variants (product_id,size,stock_qty)
+         VALUES ($1,$2,$3)`,
+        [product.id, v.size, v.stock_qty]
+      );
+    }
+    // insert images (if you wish)
+    // …
+    await client.query('COMMIT');
+    // re‐fetch with variants & images
+    const result = await pool.query(
+      `SELECT 
+        p.*, 
+        COALESCE(json_agg(
+          json_build_object(
+            'id',    pv.id,
+            'size',  pv.size,
+            'stock', pv.stock_qty
+          ) ORDER BY pv.size
+        ) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
+        COALESCE(json_agg(pi.image_url ORDER BY pi.is_primary DESC)
+          FILTER (WHERE pi.image_url IS NOT NULL), '[]') AS images
+      FROM products p
+      LEFT JOIN product_variants pv ON p.id = pv.product_id
+      LEFT JOIN product_images pi ON p.id = pi.product_id
+      WHERE p.id = $1
+      GROUP BY p.id;`,
+      [product.id]
+    );
+    res.status(201).json({ product: result.rows[0] });
   } catch (err) {
-    console.error('Error inserting product:', err);
+    await client.query('ROLLBACK');
+    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 
 // Update an existing product
 router.patch('/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, stock_quantity, shoe_category } = req.body;
+  const { name, description, price, shoe_category, variants } = req.body;
 
   const sets = [];
   const values = [];
@@ -66,13 +94,6 @@ router.patch('/:id', async (req, res) => {
     sets.push(`price = $${values.length + 1}`);
     values.push(price);
   }
-  if (stock_quantity != null) {
-    if (typeof stock_quantity !== 'number') {
-      return res.status(400).json({ error: 'Invalid stock_quantity' });
-    }
-    sets.push(`stock_quantity = $${values.length + 1}`);
-    values.push(stock_quantity);
-  }
   if (shoe_category != null) {
     sets.push(`shoe_category = $${values.length + 1}`);
     values.push(shoe_category);
@@ -86,16 +107,34 @@ router.patch('/:id', async (req, res) => {
   values.push(id);
 
   const query = `
-    UPDATE products
-       SET ${sets.join(', ')}
-     WHERE id = $${values.length}
-     RETURNING
-       id, name, description, price,
-       stock_quantity AS "stockQuantity",
-       shoe_category AS "shoeCategory",
-       created_at AS "createdAt",
-       updated_at AS "updatedAt"
-  `;
+  SELECT 
+    p.*, 
+    COALESCE(json_agg(
+      json_build_object(
+        'id',    pv.id,
+        'size',  pv.size,
+        'stock', pv.stock_qty
+      ) ORDER BY pv.size
+    ) FILTER (WHERE pv.id IS NOT NULL), '[]') AS variants,
+    COALESCE(json_agg(pi.image_url ORDER BY pi.is_primary DESC)
+      FILTER (WHERE pi.image_url IS NOT NULL), '[]') AS images
+  FROM products p
+  LEFT JOIN product_variants pv ON p.id = pv.product_id
+  LEFT JOIN product_images pi ON p.id = pi.product_id
+  WHERE p.id = $1
+  GROUP BY p.id;
+`;
+
+  if (Array.isArray(variants)) {
+    await pool.query(`DELETE FROM product_variants WHERE product_id=$1`, [id]);
+    for (const v of variants) {
+      await pool.query(
+        `INSERT INTO product_variants (product_id,size,stock_qty)
+         VALUES ($1,$2,$3)`,
+        [id, v.size, v.stock_qty]
+      );
+    }
+  }
 
   try {
     const { rows: [product] } = await pool.query(query, values);

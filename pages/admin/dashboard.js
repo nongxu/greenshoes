@@ -13,8 +13,8 @@ export default function AdminDashboard({ user }) {
     description: '',
     price: '',
     shoe_category: '',
-    stock_quantity: '',
-    image: ''
+    image: '',
+    variants: [{ size: '', stock_qty: '' }]
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -37,8 +37,28 @@ export default function AdminDashboard({ user }) {
 
   const handleChange = (k, v) => setFormValues(prev => ({ ...prev, [k]: v }));
 
+  const handleVariantChange = (idx, field, value) => {
+    setFormValues(prev => {
+      const vs = [...prev.variants];
+      vs[idx] = { ...vs[idx], [field]: value };
+      return { ...prev, variants: vs };
+    });
+  };
+
+  const addVariant = () =>
+    setFormValues(prev => ({
+      ...prev,
+      variants: [...prev.variants, { size: '', stock_qty: '' }]
+    }));
+
+  const removeVariant = idx =>
+    setFormValues(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, i) => i !== idx)
+    }));
+
   function prepareCreate() {
-    setFormValues({ name: '', description: '', price: '', shoe_category: '', stock_quantity: '', image: '' });
+    setFormValues({ name: '', description: '', price: '', shoe_category: '', image: '', variants: [{ size: '', stock_qty: '' }] });
     setSelectedProduct(null);
     setMode('create');
   }
@@ -54,8 +74,8 @@ export default function AdminDashboard({ user }) {
         description: detail.description || '',
         price: detail.price,
         shoe_category: detail.shoe_category,
-        stock_quantity: detail.stockQuantity || detail.stock_quantity || '',
-        image: detail.image || ''
+        image: detail.image || '',
+        variants: detail.variants || [{ size: '', stock_qty: '' }]
       });
       setMode('edit');
     } catch {
@@ -69,8 +89,12 @@ export default function AdminDashboard({ user }) {
       name: formValues.name,
       description: formValues.description,
       price: parseFloat(formValues.price),
-      stock_quantity: Number(formValues.stock_quantity),
-      shoe_category: formValues.shoe_category
+      shoe_category: formValues.shoe_category,
+      image: formValues.image,
+      variants: formValues.variants.map(v => ({
+        size: v.size,
+        stock_qty: Number(v.stock_qty)
+      }))
     };
     const endpoint = mode === 'create'
       ? '/api/products-management'
@@ -157,7 +181,37 @@ export default function AdminDashboard({ user }) {
               <div className="form-group"><label>Description</label><textarea className="textarea" value={formValues.description} onChange={e => handleChange('description', e.target.value)} /></div>
               <div className="form-group"><label>Price</label><input type="number" step="0.01" className="input" required value={formValues.price} onChange={e => handleChange('price', e.target.value)} /></div>
               <div className="form-group"><label>Category</label><input className="input" value={formValues.shoe_category} onChange={e => handleChange('shoe_category', e.target.value)} /></div>
-              <div className="form-group"><label>Stock Quantity</label><input type="number" className="input" required value={formValues.stock_quantity} onChange={e => handleChange('stock_quantity', e.target.value)} /></div>
+              <div className="form-group full">
+                <label>Variants (Size + Stock Qty)</label>
+                {formValues.variants.map((v, i) => (
+                  <div key={i} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    <input
+                      className="input"
+                      placeholder="Size (e.g. M, 42)"
+                      required
+                      value={v.size}
+                      onChange={e => handleVariantChange(i, 'size', e.target.value)}
+                    />
+                    <input
+                      className="input"
+                      type="number"
+                      placeholder="Stock"
+                      required
+                      min="0"
+                      value={v.stock_qty}
+                      onChange={e => handleVariantChange(i, 'stock_qty', e.target.value)}
+                    />
+                    {formValues.variants.length > 1 && (
+                      <button type="button" className="btn danger" onClick={() => removeVariant(i)}>
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button type="button" className="btn" onClick={addVariant}>
+                  + Add Variant
+                </button>
+              </div>
               <div className="form-group full"><label>Image URL</label><input className="input" value={formValues.image} onChange={e => handleChange('image', e.target.value)} /></div>
               <div className="buttons">
                 {mode === 'edit' && <button type="button" className="btn danger" onClick={handleDelete}>Delete</button>}

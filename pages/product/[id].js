@@ -5,6 +5,7 @@ import { addToCart } from '../../utils/cartUtils';
 import dynamic from 'next/dynamic';
 import "slick-carousel/slick/slick.css"; 
 import "slick-carousel/slick/slick-theme.css";
+import { useRouter } from 'next/router';
 
 const Slider = dynamic(() => import('react-slick'), { ssr: false });
 
@@ -94,20 +95,33 @@ const sliderSettings = {
 
 const Product = ({ product, relatedProducts }) => {
   const [quantity, setQuantity] = useState(1);
-
+  const [selectedVar, setSelectedVar] = useState(null);
+  const variants = product.variants || [];
+  const router = useRouter();
+  const [error, setError] = useState('');
   const handleAddToCart = () => {
-    if (quantity > product.stock_quantity) {
-      alert(`Only ${product.stock_quantity} item(s) left in stock.`);
+    if (!selectedVar) {
+      setError('Please select a size before proceeding to checkout'); 
       return;
     }
-    const productData = {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.images[0],
-    };
-    addToCart(productData, quantity);
+    if (quantity > selectedVar.stock) {
+      alert(`Only ${selectedVar.stock} left in size ${selectedVar.size}`);
+      return;
+    }
+    setError('');
+    addToCart({
+      productId:  product.id,
+      variantId:  selectedVar.id,
+      name:       product.name,
+      size:       selectedVar.size,
+      price:      product.price,
+      image:      product.images[0],
+      stock:      selectedVar.stock,  
+      id:         `${product.id}-${selectedVar.id}`  
+    }, quantity);
     alert('Item added to cart!');
+
+    router.push('/cart');
   };
 
   return (
@@ -136,31 +150,46 @@ const Product = ({ product, relatedProducts }) => {
             </div>
 
             <div className="product-info">
-              <div className="product-size">
-                <label>Size:</label>
-                <select>
-                  <option>Choose Size</option>
-                  <option>Small</option>
-                  <option>Medium</option>
-                  <option>Large</option>
-                </select>
-              </div>
+            <div className="product-size">
+              <label>Size:</label>
+              <select
+                value={selectedVar?.id || ''}
+                onChange={e => {
+                  const v = variants.find(x => x.id === e.target.value);
+                  setSelectedVar(v);
+                  setQuantity(1);
+                }}
+              >
+                <option value="">Choose Size</option>
+                {variants.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.size} ({v.stock})
+                  </option>
+                ))}
+              </select>
+            </div>
 
               <div className="product-quantity">
                 <label>Quantity:</label>
                 <input
                   type="number"
                   min="1"
-                  max={product.stock_quantity}
+                  max={selectedVar?.stock || 1}
+                  disabled={!selectedVar}
                   value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value, 10) || 1)}
+                  onChange={e => {
+                    const val = parseInt(e.target.value, 10) || 1;
+                    setQuantity(selectedVar
+                      ? Math.min(val, selectedVar.stock)
+                      : 1
+                    );
+                  }}
                 />
               </div>
 
-              <button className="add-to-cart" onClick={handleAddToCart}>
+              <button className="add-to-cart" onClick={handleAddToCart} disabled={!selectedVar}>
                 Add To Cart
               </button>
-
               <p className="description">{product.description}</p>
             </div>
           </div>

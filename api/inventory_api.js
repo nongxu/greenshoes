@@ -7,31 +7,25 @@ const { pool } = require('../db/connection');
 // route: update inventory
 // PATCH /api/inventory_api
 router.patch('/', async (req, res) => {
-  const { productId, quantity } = req.body;
-
-  // basic validation
-  if (!productId || typeof quantity !== 'number' || quantity <= 0) {
-    return res.status(400).json({ success: false, message: "Invalid productId or quantity." });
+  const { variantId, quantity } = req.body;
+  if (!variantId || typeof quantity !== 'number' || quantity <= 0) {
+    return res.status(400).json({ success: false, message: 'Invalid variantId or quantity.' });
   }
-
   try {
-    // Trying to reduce inventory
-    const result = await pool.query(
-      `UPDATE products
-          SET stock_quantity = stock_quantity - $1
-        WHERE id = $2 AND stock_quantity >= $1
-        RETURNING id, name, stock_quantity`,
-      [quantity, productId]
+    const { rowCount, rows } = await pool.query(
+      `UPDATE product_variants
+         SET stock_qty = stock_qty - $1
+       WHERE id = $2 AND stock_qty >= $1
+       RETURNING id, size, stock_qty`,
+      [quantity, variantId]
     );
-
-    if (result.rowCount === 0) {
-      return res.status(400).json({ success: false, message: "Insufficient stock or product not found." });
+    if (!rowCount) {
+      return res.status(400).json({ success: false, message: 'Insufficient stock or variant not found.' });
     }
-
-    return res.status(200).json({ success: true, updated: result.rows[0] });
+    res.json({ success: true, updated: rows[0] });
   } catch (err) {
-    console.error("Inventory update error:", err);
-    return res.status(500).json({ success: false, message: "Internal Server Error" });
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
   }
 });
 
