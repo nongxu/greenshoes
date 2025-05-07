@@ -103,9 +103,22 @@ export default function CartPage() {
 
         {/* Proceed to checkout button */}
         <div style={{ textAlign: 'center', marginTop: '20px' }}>
-          <Link href="/checkout">
-            <button style={checkoutButtonStyle}>Proceed to Checkout</button>
-          </Link>
+        {cartItems.length > 0 ? (
+            <Link href="/checkout">
+              <button style={checkoutButtonStyle}>Proceed to Checkout</button>
+            </Link>
+          ) : (
+            <button
+              style={{ 
+                ...checkoutButtonStyle, 
+                opacity: 0.5, 
+                cursor: 'not-allowed' 
+              }}
+              disabled
+            >
+              Proceed to Checkout
+            </button>
+          )}
         </div>
       </div>
     </Layout>

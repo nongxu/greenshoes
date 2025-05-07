@@ -46,6 +46,9 @@ export default function Dashboard() {
     <Layout>
       <div className={styles.container}>
         <h2>User Dashboard</h2>
+        <p style={{ fontSize: '1rem', marginBottom: '1.5rem' }}>
+         Welcome back, <strong>{user.name}</strong>!
+        </p>
         {fetching && <p>Loading order history…</p>}
         {!fetching && error && <p className={styles.error}>{error}</p>}
         {!fetching && !error && (

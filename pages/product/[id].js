@@ -138,10 +138,6 @@ const Product = ({ product, relatedProducts }) => {
             <div className="product-info">
               <div className="product-size">
                 <label>Size:</label>
-                <div className="size-buttons">
-                  <button>Women</button>
-                  <button>Men</button>
-                </div>
                 <select>
                   <option>Choose Size</option>
                   <option>Small</option>

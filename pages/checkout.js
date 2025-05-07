@@ -16,9 +16,6 @@ export default function Checkout() {
     }
   }, [user, loading, router]);
 
-  // Store user input for checkout
-  const router = useRouter();
-  const { user } = useUserContext();
   const STORAGE_KEY = `checkoutDraft:${user?.id}`;
   const [userData, setUserData] = useState({
     name: "",
