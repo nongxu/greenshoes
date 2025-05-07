@@ -29,15 +29,20 @@ export default function Layout({ children }) {
             <Link href="/" legacyBehavior>
               <a className={styles.navLink}>Home</a>
             </Link>
-            <Link href="/products-listing" legacyBehavior>
-              <a className={styles.navLink}>Products</a>
-            </Link>
-            <Link href="/orders" legacyBehavior>
-              <a className={styles.navLink}>Orders</a>
-            </Link>
-            <Link href="/cart" legacyBehavior>
-              <a className={styles.navLink}>Cart</a>
-            </Link>
+            {/* only regular users get shopping links */}
+            {!loading && user?.role !== 'admin' && (
+              <>
+                <Link href="/products-listing" legacyBehavior>
+                  <a className={styles.navLink}>Products</a>
+                </Link>
+                <Link href="/orders" legacyBehavior>
+                  <a className={styles.navLink}>Orders</a>
+                </Link>
+                <Link href="/cart" legacyBehavior>
+                  <a className={styles.navLink}>Cart</a>
+                </Link>
+              </>
+            )}
             {!loading && user && (
               <Link href={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'} legacyBehavior>
                 <a className={styles.navLink}>Dashboard</a>

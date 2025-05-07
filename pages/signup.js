@@ -1,7 +1,6 @@
 // pages/signup.js
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
-import Link from 'next/link';
 import { useUserContext } from '../lib/UserContext';
 import Layout from '../components/Layout';
 import styles from '../styles/signup.module.css';
@@ -116,9 +115,7 @@ export default function SignupPage() {
         </form>
         <p className={styles.linkText}>
           Already have an account?{' '}
-          <Link href="/signin" legacyBehavior>
-            <a className={styles.link}>Sign in here</a>
-          </Link>
+          <a href="/signin" className={styles.link}>Sign in here</a>
         </p>
       </div>
     </Layout>
