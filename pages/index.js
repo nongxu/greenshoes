@@ -5,28 +5,28 @@ import { pool } from '../db/connection';
 import { useUserContext } from '../lib/UserContext';
 import styles from '../styles/Home.module.css';
 
-const Home = ({ products }) => {
-  const { user } = useUserContext();
+export default function Home({ products }) {
+  const { user, loading } = useUserContext();
 
   return (
     <Layout>
       <div className={styles.hero}>
         <h1 className={styles.title}>Welcome to GreenShoes</h1>
-        {user && (
+        {!loading && user && (
           <p className={styles.greeting}>Welcome back, {user.name}!</p>
         )}
         <p className={styles.subtitle}>
-          Your one‑stop shop for all things footwear.
+          Your one-stop shop for all things footwear.
         </p>
         <div className={styles.buttonRow}>
           <Link href="/products-listing">
             <button className={styles.primaryBtn}>Shop Now</button>
           </Link>
-          {user ? (
+          {!loading && user ? (
             <Link href={user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard'}>
               <button className={styles.primaryBtn}>Dashboard</button>
             </Link>
-          ) : (
+          ) : !loading ? (
             <>
               <Link href="/signin">
                 <button className={styles.secondaryBtn}>Sign In</button>
@@ -35,14 +35,14 @@ const Home = ({ products }) => {
                 <button className={styles.secondaryBtn}>Sign Up</button>
               </Link>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 
       <div className={styles.showcase}>
         {products.length > 0 ? (
           products.map((p) => (
-            <Link legacyBehavior key={p.id} href={`/product/${p.id}`}>
+            <Link key={p.id} href={`/product/${p.id}`} legacyBehavior>
               <a className={styles.card}>
                 <img
                   src={p.image_url || '/images/default.jpg'}
@@ -60,36 +60,26 @@ const Home = ({ products }) => {
       </div>
     </Layout>
   );
-};
+}
 
 export async function getServerSideProps() {
   try {
     const query = `
-      SELECT 
-        id, 
-        name, 
-        price, 
-        (
-          SELECT image_url 
-          FROM product_images 
-          WHERE product_id = products.id AND is_primary = true 
-          LIMIT 1
-        ) as image_url 
+      SELECT id, name, price,
+        (SELECT image_url FROM product_images
+         WHERE product_id = products.id AND is_primary = true LIMIT 1)
+        AS image_url
       FROM products
       WHERE stock_quantity > 0
-      ORDER BY RANDOM() 
+      ORDER BY RANDOM()
       LIMIT 3
     `;
     const client = await pool.connect();
     const { rows } = await client.query(query);
     client.release();
-
     const products = rows.map(p => ({ ...p, price: parseFloat(p.price) }));
     return { props: { products } };
-  } catch (error) {
-    console.error('Error fetching products:', error);
+  } catch {
     return { props: { products: [] } };
   }
 }
-
-export default Home;

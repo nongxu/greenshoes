@@ -1,33 +1,44 @@
-import { useState } from 'react';
+// pages/signup.js
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useUserContext } from '../lib/UserContext';
 import Layout from '../components/Layout';
 import styles from '../styles/signup.module.css';
 
 export default function SignupPage() {
   const router = useRouter();
-  const { setUser } = useUserContext();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const { user, loading, setUser } = useUserContext();
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = e =>
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+    }
+  }, [user, loading, router]);
 
-  const handleSubmit = async e => {
+  const handleChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-
-    setLoading(true);
+    setSubmitting(true);
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       credentials: 'include',
-      headers:{ 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name: form.name,
         email: form.email,
@@ -35,16 +46,15 @@ export default function SignupPage() {
       })
     });
     const body = await res.json();
-    setLoading(false);
-
+    setSubmitting(false);
     if (!res.ok) {
       setError(body.message || 'Signup failed');
       return;
     }
-
     setUser(body.user);
-    router.push('/user/dashboard');
   };
+
+  if (loading || user) return null;
 
   return (
     <Layout>
@@ -52,7 +62,6 @@ export default function SignupPage() {
         <h2 className={styles.heading}>Sign Up</h2>
         {error && <p className={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Name */}
           <div className={styles.formGroup}>
             <label htmlFor="name">Name:</label>
             <input
@@ -65,7 +74,6 @@ export default function SignupPage() {
               className={styles.input}
             />
           </div>
-          {/* Email */}
           <div className={styles.formGroup}>
             <label htmlFor="email">Email:</label>
             <input
@@ -78,7 +86,6 @@ export default function SignupPage() {
               className={styles.input}
             />
           </div>
-          {/* Password */}
           <div className={styles.formGroup}>
             <label htmlFor="password">Password:</label>
             <input
@@ -91,7 +98,6 @@ export default function SignupPage() {
               className={styles.input}
             />
           </div>
-          {/* Confirm Password */}
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword">Confirm Password:</label>
             <input
@@ -104,13 +110,15 @@ export default function SignupPage() {
               className={styles.input}
             />
           </div>
-
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Signing up…' : 'Sign Up'}
+          <button type="submit" className={styles.button} disabled={submitting}>
+            {submitting ? 'Signing up…' : 'Sign Up'}
           </button>
         </form>
         <p className={styles.linkText}>
-          Already have an account? <a href="/signin" className={styles.link}>Sign in here</a>
+          Already have an account?{' '}
+          <Link href="/signin" legacyBehavior>
+            <a className={styles.link}>Sign in here</a>
+          </Link>
         </p>
       </div>
     </Layout>
