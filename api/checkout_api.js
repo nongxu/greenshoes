@@ -43,6 +43,11 @@ router.post('/', async (req, res) => {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         userId = decoded.sub;
+        const { role } = jwt.verify(token, process.env.JWT_SECRET);
+        if ( role === 'admin' ) {
+          return res.status(403).json({ success: false, message: "Admin cannot checkout." });
+
+        } 
       } catch (err) {
         console.warn("Invalid token, proceeding as guest checkout");
         // If the token is wrong, proceed as a guest
@@ -82,6 +87,13 @@ router.post('/', async (req, res) => {
       )
     );
 
+    // Insert into user_order_history
+    await pool.query(
+      `INSERT INTO user_order_history (user_id, order_id, status)
+       VALUES ($1, $2, $3)`,
+      [userId, order.id, order.order_status || 'pending']
+    );
+    
     // Return success with the new order ID
     res.status(200).json({ success: true, orderId: order.id });
 
