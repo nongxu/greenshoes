@@ -1,24 +1,31 @@
-import { useState } from 'react';
+// pages/signin.js
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import { useUserContext } from '../lib/UserContext';
 import Layout from '../components/Layout';
 import styles from '../styles/signin.module.css';
 
 export default function SigninPage() {
   const router = useRouter();
-  const { setUser } = useUserContext();
+  const { user, loading, setUser } = useUserContext();
   const [form, setForm] = useState({ email: '', password: '', role: 'user' });
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = e =>
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+    }
+  }, [user, loading, router]);
 
-  const handleSubmit = async e => {
+  const handleChange = (e) =>
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    setLoading(true);
-
+    setSubmitting(true);
     const res = await fetch('/api/auth/signin', {
       method: 'POST',
       credentials: 'include',
@@ -26,16 +33,15 @@ export default function SigninPage() {
       body: JSON.stringify(form)
     });
     const body = await res.json();
-    setLoading(false);
-
+    setSubmitting(false);
     if (!res.ok) {
       setError(body.message || 'Login failed');
       return;
     }
-
     setUser(body.user);
-    router.push(body.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
   };
+
+  if (loading || user) return null;
 
   return (
     <Layout>
@@ -43,7 +49,6 @@ export default function SigninPage() {
         <h2 className={styles.heading}>Login</h2>
         {error && <p className={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Email */}
           <div className={styles.formGroup}>
             <label htmlFor="email">Email:</label>
             <input
@@ -56,7 +61,6 @@ export default function SigninPage() {
               className={styles.input}
             />
           </div>
-          {/* Password */}
           <div className={styles.formGroup}>
             <label htmlFor="password">Password:</label>
             <input
@@ -69,7 +73,6 @@ export default function SigninPage() {
               className={styles.input}
             />
           </div>
-          {/* Role */}
           <div className={styles.formGroup}>
             <label htmlFor="role">Role:</label>
             <select
@@ -83,9 +86,8 @@ export default function SigninPage() {
               <option value="admin">Admin</option>
             </select>
           </div>
-
-          <button type="submit" className={styles.button} disabled={loading}>
-            {loading ? 'Signing in…' : 'Sign In'}
+          <button type="submit" className={styles.button} disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign In'}
           </button>
         </form>
         <p className={styles.linkText}>

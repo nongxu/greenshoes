@@ -1,10 +1,21 @@
 import { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { useUserContext } from "../lib/UserContext";  // Import user context for auth info
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
-import { useUserContext } from "../lib/UserContext";
 
 export default function Checkout() {
+  const router = useRouter();
+  const { user, loading } = useUserContext();
+
+  // Redirect admin users away from the checkout page
+  useEffect(() => {
+    if (!loading && user?.role === "admin") {
+      router.replace("/admin/dashboard");
+    }
+  }, [user, loading, router]);
+
   // Store user input for checkout
   const router = useRouter();
   const { user } = useUserContext();
@@ -15,16 +26,17 @@ export default function Checkout() {
     billingAddress: "",
     cardNumber: "",
     expiration: "",
-    cvc: ""
+    cvc: "",
+    phone: ""
   });
 
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  const [successMessage, setSuccessMessage] = useState(""); // Display order ID
+  const [successMessage, setSuccessMessage] = useState("");  // Display order ID
 
-  // Load cart items from cookie (using Cookies from cart.js)
+  // Load cart items from cookie
   useEffect(() => {
     const cookieCart = Cookies.get("cart");
     if (cookieCart) {
@@ -44,9 +56,9 @@ export default function Checkout() {
 
   // Read current user's saved address from the DB through API call
   useEffect(() => {
-    const token = Cookies.get("token"); 
-    if (!token) return; 
-  
+    const token = Cookies.get("token");
+    if (!token) return;
+
     fetch("/api/addresses", {
       headers: {
         "Authorization": `Bearer ${token}`
@@ -97,7 +109,7 @@ export default function Checkout() {
   // Handle checkout submit: submits user's order, stores it in the DB, and returns a unique order ID.
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     // Prepare payload to send
     const payload = {
       name: userData.name,
@@ -113,17 +125,15 @@ export default function Checkout() {
       })),
     };
 
-    // /api/orders
     try {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-  
+
       const data = await res.json();
       if (res.ok) {
-        
         // ✅ Send to inventory_api, reduce inventory
         for (const item of cartItems) {
           try {
@@ -240,7 +250,6 @@ export default function Checkout() {
           />
 
           <Input label="Phone Number" name="phone" value={userData.phone} onChange={handleChange} />
-
 
           {/* Payment section */}
           <Input label="Card Number" name="cardNumber" value={userData.cardNumber} onChange={handleChange} />

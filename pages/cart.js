@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
 import Layout from '../components/Layout'
+import { useUserContext } from '../lib/UserContext'
 
 export default function CartPage() {
+  const router = useRouter()
+  const { user, loading } = useUserContext()
   const [cartItems, setCartItems] = useState([])
+
+  // Redirect admins away from the cart
+  useEffect(() => {
+    if (!loading && user?.role === 'admin') {
+      router.replace('/admin/dashboard')
+    }
+  }, [user, loading, router])
 
   // Load cart from cookies on page load
   useEffect(() => {
