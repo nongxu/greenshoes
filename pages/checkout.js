@@ -2,10 +2,13 @@ import { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import Cookies from "js-cookie";
 import { useRouter } from "next/router";
+import { useUserContext } from "../lib/UserContext";
 
 export default function Checkout() {
   // Store user input for checkout
   const router = useRouter();
+  const { user } = useUserContext();
+  const STORAGE_KEY = `checkoutDraft:${user?.id}`;
   const [userData, setUserData] = useState({
     name: "",
     address: "",
@@ -63,6 +66,27 @@ export default function Checkout() {
       }));
     }
   }, [billingSameAsShipping, userData.address]);
+
+  // Load any draft information from local storage
+  useEffect(() => {
+    if(!user) return;
+    const draft = localStorage.getItem(STORAGE_KEY);
+    if(draft) {
+      try{
+        setUserData(JSON.parse(draft));
+      }catch {}
+    }
+  }, [user]);
+
+  // Save user input to local storage on change (500ms debounce)
+  useEffect(() => {
+    if (!user) return;
+    const timer = setTimeout(() => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+    }, 500); // wait 500ms after last change
+  
+    return () => clearTimeout(timer);
+  }, [userData, user]);
 
   // Handle input change
   const handleChange = (e) => {
