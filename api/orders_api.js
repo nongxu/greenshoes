@@ -9,12 +9,16 @@ async function fetchItems(orderId) {
     `SELECT
        oi.id,
        oi.product_id   AS "productId",
+       p.name          AS "productName",    -- <- here
+       oi.variant_id   AS "variantId",
        pv.size         AS size,
        oi.quantity,
        oi.price
      FROM order_items oi
-     JOIN product_variants pv ON pv.id = oi.variant_id
-     WHERE oi.order_id = $1`,
+     JOIN products p           ON p.id  = oi.product_id
+     JOIN product_variants pv  ON pv.id = oi.variant_id
+     WHERE oi.order_id = $1
+     ORDER BY oi.id`,
     [orderId]
   );
   return rows;

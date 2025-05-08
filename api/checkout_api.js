@@ -119,6 +119,36 @@ router.post('/', async (req, res) => {
          VALUES ($1,$2,$3)`,
         [userId, order.id, order.order_status || 'pending']
       );
+
+      // ── NEW: save shipping address into users.address ──
+      // Fetch existing addresses array (or initialize)
+      const { rows: userRows } = await client.query(
+        'SELECT address FROM users WHERE id = $1',
+        [userId]
+      );
+      let addrList = [];
+      const raw = userRows[0]?.address;
+      if (raw) {
+        try {
+          addrList = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        } catch {
+          addrList = [];
+        }
+      }
+      // Append new address object
+      addrList.push({
+        name:            name,              // from req.body
+        address:         shippingAddress,   // from req.body
+        phone:           phone              // from req.body
+      });
+      // Update users.address column
+      await client.query(
+        `UPDATE users
+           SET address = $1
+         WHERE id = $2`,
+        [JSON.stringify(addrList), userId]
+      );
+      // ────────────────────────────────────────────────
     }
     
     await client.query('COMMIT');

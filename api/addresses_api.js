@@ -15,18 +15,30 @@ router.use(ensureAuth);
 router.get('/', async (req, res) => {
   const userId = req.user.sub;
   try {
-    // If you store multiple addresses, query your addresses table.
-    // Here we assume `users.address` is a JSON/text field:
     const { rows } = await pool.query(
       'SELECT address FROM users WHERE id = $1',
       [userId]
     );
 
-    const addresses = rows[0]?.address
-      ? (typeof rows[0].address === 'string' ? JSON.parse(rows[0].address) : rows[0].address)
-      : [];
+    let list = [];
+    const raw = rows[0]?.address;
 
-    return res.json(addresses);
+    if (raw) {
+      if (typeof raw === 'string') {
+        try {
+          // JSON‐stored addresses
+          list = JSON.parse(raw);
+        } catch {
+          // fallback single string → wrap as one address
+          list = [{ name: 'Default', address: raw, phone: '' }];
+        }
+      } else {
+        // already a JSON object/array
+        list = raw;
+      }
+    }
+
+    return res.json(list);
   } catch (err) {
     console.error('Error fetching addresses:', err);
     return res.status(500).json({ message: 'Server error' });
