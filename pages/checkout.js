@@ -27,10 +27,11 @@ export default function Checkout() {
   });
 
   const [billingSameAsShipping, setBillingSameAsShipping] = useState(false);
-  const [savedAddresses, setSavedAddresses] = useState([]);
   const [cartItems, setCartItems] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [successMessage, setSuccessMessage] = useState("");  // Display order ID
+  const [loadedProfile, setLoadedProfile] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState([]);
 
   // Load cart items from cookie
   useEffect(() => {
@@ -50,20 +51,42 @@ export default function Checkout() {
     setTotalAmount(total);
   }, [cartItems]);
 
-  // Read current user's saved address from the DB through API call
+  // Load draft or fetch profile & addresses from DB
   useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token) return;
+    // Try draft in localStorage first
+    const draft = localStorage.getItem(STORAGE_KEY);
+    if (draft) {
+      try { setUserData(JSON.parse(draft)); }
+      catch {}
+      setLoadedProfile(true);
+      return; 
+    }
 
-    fetch("/api/addresses", {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
-    })
-      .then((res) => res.json())
-      .then((data) => setSavedAddresses(data))
-      .catch((err) => console.error("Failed to fetch addresses:", err));
-  }, []);
+    // No draft: if logged-in, fetch profile & addresses from DB
+    const token = Cookies.get("token");
+    if (token && user) {
+      fetch("/api/user/profile", {
+        headers: { "Authorization": `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(profile => {
+          // auto-fill form fields
+          setUserData(prev => ({
+            ...prev,
+            name:            profile.full_name    || prev.name,
+            phone:           profile.phone        || prev.phone,
+            address:         profile.delivery_address?.[0] || prev.address,
+            billingAddress:  profile.billing_address      || prev.billingAddress
+          }));
+          setSavedAddresses(profile.delivery_address || []);
+        })
+        .catch(console.error)
+        .finally(() => setLoadedProfile(true));
+    } else {
+      // 3) Guest + no draft: just proceed
+      setLoadedProfile(true);
+    }
+  }, [user]);
 
   // Sync billing address if checkbox is checked
   useEffect(() => {
@@ -74,17 +97,6 @@ export default function Checkout() {
       }));
     }
   }, [billingSameAsShipping, userData.address]);
-
-  // Load any draft information from local storage
-  useEffect(() => {
-    if(!user) return;
-    const draft = localStorage.getItem(STORAGE_KEY);
-    if(draft) {
-      try{
-        setUserData(JSON.parse(draft));
-      }catch {}
-    }
-  }, [user]);
 
   // Save user input to local storage on change (500ms debounce)
   useEffect(() => {
@@ -262,7 +274,7 @@ export default function Checkout() {
           </div>
 
           {/* Submit button */}
-          <button type="submit" style={buttonStyle}>
+          <button type="submit" style={buttonStyle} disabled={!loadedProfile}>
             Confirm Checkout
           </button>
         </form>

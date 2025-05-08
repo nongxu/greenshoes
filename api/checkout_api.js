@@ -121,33 +121,32 @@ router.post('/', async (req, res) => {
         [userId, order.id, order.order_status || 'pending']
       );
 
-      // ── NEW: save shipping address into users.address ──
-      // Fetch existing addresses array (or initialize)
-      const { rows: userRows } = await client.query(
-        'SELECT address FROM users WHERE id = $1',
-        [userId]
-      );
-      let addrList = [];
-      const raw = userRows[0]?.address;
-      if (raw) {
-        try {
-          addrList = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        } catch {
-          addrList = [];
-        }
-      }
-      // Append new address object
-      addrList.push({
-        name:            name,              // from req.body
-        address:         shippingAddress,   // from req.body
-        phone:           phone              // from req.body
-      });
-      // Update users.address column
       await client.query(
         `UPDATE users
-           SET address = $1
-         WHERE id = $2`,
-        [JSON.stringify(addrList), userId]
+           SET full_name        = $1,
+               phone            = $2,
+               delivery_address = $3,
+               billing_address  = $4
+         WHERE id = $5`,
+        [
+          name,             // maps to users.full_name
+          phone,            // maps to users.phone
+          shippingAddress,  // now a TEXT column
+          billingAddress,   // TEXT column
+          userId
+        ]
+      );
+
+      const last4 = cardNumber.slice(-4);
+      // encrypt & store CC info ──
+      await client.query(
+        `UPDATE users
+           SET encrypted_cc_number    = pgp_sym_encrypt($1, 'your_key'),
+               encrypted_cc_expiration = pgp_sym_encrypt($2, 'your_key'),
+               encrypted_cc_cvc        = pgp_sym_encrypt($3, 'your_key'),
+               credit_card_last4      = $4
+         WHERE id = $5`,
+        [cardNumber, expiration, cvc, last4,userId]
       );
       // ────────────────────────────────────────────────
     }

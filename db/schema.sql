@@ -18,7 +18,6 @@ CREATE TABLE users (
     phone VARCHAR(20),
     address TEXT,
     credit_card_last4 CHAR(4),
-    encrypted_credit_card TEXT,
     created_at TIMESTAMP DEFAULT now()
 );
 
@@ -94,3 +93,21 @@ CREATE TABLE user_order_history (
 
 ALTER TABLE order_items
   ADD COLUMN variant_id UUID REFERENCES product_variants(id);
+
+  BEGIN;
+
+-- rename generic address to delivery_address
+ALTER TABLE users
+  RENAME COLUMN address TO delivery_address;
+
+-- add separate billing_address column
+ALTER TABLE users
+  ADD COLUMN billing_address TEXT;
+
+-- store encrypted CC number, expiration, and CVC
+ALTER TABLE users
+  ADD COLUMN encrypted_cc_number    TEXT,
+  ADD COLUMN encrypted_cc_expiration TEXT,
+  ADD COLUMN encrypted_cc_cvc       TEXT;
+
+COMMIT;

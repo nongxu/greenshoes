@@ -145,7 +145,7 @@ async function seedProductImages() {
 async function seedData() {
     try {
         await clearData();
-        await seedUsers();
+        // await seedUsers();
         await seedProducts();
         await seedProductImages();
     } catch (err) {

@@ -10,18 +10,18 @@ router.use(ensureAuth);
 
 /**
  * GET /api/address_api
- * Returns the address(es) for the current user.
+ * Returns the delivery address(es) for the current user.
  */
 router.get('/', async (req, res) => {
   const userId = req.user.sub;
   try {
     const { rows } = await pool.query(
-      'SELECT address FROM users WHERE id = $1',
+      'SELECT delivery_address FROM users WHERE id = $1',
       [userId]
     );
 
     let list = [];
-    const raw = rows[0]?.address;
+    const raw = rows[0]?.delivery_address;
 
     if (raw) {
       if (typeof raw === 'string') {
@@ -40,14 +40,14 @@ router.get('/', async (req, res) => {
 
     return res.json(list);
   } catch (err) {
-    console.error('Error fetching addresses:', err);
+    console.error('Error fetching delivery addresses:', err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
 
 /**
  * POST /api/address_api
- * Add a new address in the user's record.
+ * Add a new delivery address in the user's record.
  * Expects { name: string, address: string } in body.
  */
 router.post('/', async (req, res) => {
@@ -61,22 +61,22 @@ router.post('/', async (req, res) => {
   try {
     // Fetch existing
     const { rows } = await pool.query(
-      'SELECT address FROM users WHERE id = $1',
+      'SELECT delivery_address FROM users WHERE id = $1',
       [userId]
     );
 
     // Parse json address
     let list = [];
-    if (rows[0]?.address) {
-      if (typeof rows[0].address === 'string') {
+    if (rows[0]?.delivery_address) {
+      if (typeof rows[0].delivery_address === 'string') {
         try {
-          list = JSON.parse(rows[0].address);
+          list = JSON.parse(rows[0].delivery_address);
         } catch (err) {
-          console.error('Failed to parse address JSON', err);
-          return res.status(500).json({ message: 'Invalid address data' });
+          console.error('Failed to parse delivery address JSON', err);
+          return res.status(500).json({ message: 'Invalid delivery address data' });
         }
       } else {
-        list = rows[0].address;
+        list = rows[0].delivery_address;
       }
     }
     
@@ -84,20 +84,20 @@ router.post('/', async (req, res) => {
 
     // Save back
     await pool.query(
-      'UPDATE users SET address = $1 WHERE id = $2',
+      'UPDATE users SET delivery_address = $1 WHERE id = $2',
       [JSON.stringify(list), userId]
     );
 
     return res.status(201).json({ name, address, phone });
   } catch (err) {
-    console.error('Error saving address:', err);
+    console.error('Error saving delivery address:', err);
     return res.status(500).json({ message: 'Server error' });
   }
 });
 
 /**
  * DELETE /api/address_api/:idx
- * Remove the address at index `idx` from the user's list.
+ * Remove the delivery address at index `idx` from the user's list.
  */
 router.delete('/:idx', async (req, res) => {
   const userId = req.user.sub;
@@ -110,22 +110,22 @@ router.delete('/:idx', async (req, res) => {
   try {
     // Load, remove, save
     const { rows } = await pool.query(
-      'SELECT address FROM users WHERE id = $1',
+      'SELECT delivery_address FROM users WHERE id = $1',
       [userId]
     );
     
     // Parse json address
     let list = [];
-    if (rows[0]?.address) {
-      if (typeof rows[0].address === 'string') {
+    if (rows[0]?.delivery_address) {
+      if (typeof rows[0].delivery_address === 'string') {
         try {
-          list = JSON.parse(rows[0].address);
+          list = JSON.parse(rows[0].delivery_address);
         } catch (err) {
-        console.error('Failed to parse address JSON', err);
-        return res.status(500).json({ message: 'Invalid address data' });
+        console.error('Failed to parse delivery address JSON', err);
+        return res.status(500).json({ message: 'Invalid delivery address data' });
         }
       } else {
-        list = rows[0].address;
+        list = rows[0].delivery_address;
       }
     }
 
@@ -133,13 +133,13 @@ router.delete('/:idx', async (req, res) => {
 
     // Delete
     await pool.query(
-      'UPDATE users SET address = $1 WHERE id = $2',
+      'UPDATE users SET delivery_address = $1 WHERE id = $2',
       [JSON.stringify(list), userId]
     );
 
     return res.sendStatus(204);
   } catch (err) {
-    console.error('Error deleting address:', err);
+    console.error('Error deleting delivery address:', err);
     return res.status(500).json({ message: 'Server error' });
   }
 });

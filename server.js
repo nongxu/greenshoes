@@ -49,6 +49,8 @@ async function startServer() {
     // Product Detail
     server.use('/api/product', require('./api/product_detail_api'));
 
+    // User Profile
+    server.use('/api/profile', require('./api/profile_api'));
 
     // Handling Next.js page requests
     server.all('*', (req, res) => {

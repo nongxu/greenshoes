@@ -71,8 +71,13 @@ export default function Dashboard() {
               </ul>
         )}
         <div style={{ textAlign:'center', marginTop:'2rem' }}>
-          <Link href="/user/address">
-            <button className={styles.manageBtn}>Manage Addresses</button>
+          <Link href="/user/profile">
+            <button
+              className={styles.manageBtn}
+              style={{ marginLeft: '12px' }}
+            >
+              View Profile
+            </button>
           </Link>
         </div>
       </div>

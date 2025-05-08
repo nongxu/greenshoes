@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Layout from '../../components/Layout'
 import { useUserContext } from '../../lib/UserContext'
-import styles from '../../styles/user-address.module.css'
+import styles from '../../styles/user-dashboard.module.css'
 
 export default function AddressBook() {
   const router = useRouter()
@@ -83,12 +83,7 @@ export default function AddressBook() {
   return (
     <Layout>
       <div className={styles.container}>
-        <header className={styles.header}>
           <h2>Manage Shipping Addresses</h2>
-          <Link href="/user/dashboard">
-            <button className={styles.backBtn}>Back to Dashboard</button>
-          </Link>
-        </header>
 
         {error && <p className={styles.error}>{error}</p>}
 
@@ -152,6 +147,11 @@ export default function AddressBook() {
               </ul>
             )}
           </section>
+          <div style={{ marginTop: '2rem' }}>
+          <Link href="/user/dashboard">
+            <button className={styles.manageBtn}>Back to Dashboard</button>
+          </Link>
+          </div>
         </div>
       </div>
     </Layout>
