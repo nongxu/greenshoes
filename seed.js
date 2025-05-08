@@ -70,7 +70,7 @@ async function seedProducts(num = 10) {
       const description   = faker.lorem.sentences(2);
       const price         = faker.number.float({ min:20, max:200, precision:0.01 });
       const shoe_category = faker.helpers.arrayElement(
-        ['Sneakers','Boots','Sandals','Heels']
+        ['Sneakers','Boots','Sandals','Loafers','Heels']
       );
       try {
         const { rows } = await pool.query(insertProduct,

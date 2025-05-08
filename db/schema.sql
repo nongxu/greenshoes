@@ -9,6 +9,8 @@ DROP TABLE IF EXISTS
   users
 CASCADE;
 
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- Table: users
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
