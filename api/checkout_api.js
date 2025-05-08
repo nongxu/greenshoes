@@ -71,10 +71,11 @@ router.post('/', async (req, res) => {
       if (!rows.length) {
         throw { status: 400, message: `Variant ${variantId} not found` };
       }
+      const { stock_qty, size, product_name } = rows[0];
       if (rows[0].stock_qty < quantity) {
         throw {
           status: 400,
-          message: `Insufficient stock for size (variant) ${variantId}: only ${rows[0].stock_qty} left`
+          message: `Insufficient stock for "${product_name}" (size ${size}): only ${stock_qty} left`
         };
       }
     }
