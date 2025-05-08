@@ -129,10 +129,10 @@ router.post('/', async (req, res) => {
                billing_address  = $4
          WHERE id = $5`,
         [
-          name,             // maps to users.full_name
-          phone,            // maps to users.phone
-          shippingAddress,  // now a TEXT column
-          billingAddress,   // TEXT column
+          name,             
+          phone,            
+          shippingAddress,  
+          billingAddress,  
           userId
         ]
       );
@@ -148,7 +148,6 @@ router.post('/', async (req, res) => {
          WHERE id = $5`,
         [cardNumber, expiration, cvc, last4,userId]
       );
-      // ────────────────────────────────────────────────
     }
     
     await client.query('COMMIT');

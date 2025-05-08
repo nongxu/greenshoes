@@ -55,9 +55,11 @@ export default function OrderDetails() {
             <ul className={styles.list}>
               {order.items.map(item => (
                 <li key={item.id || `${item.productName}-${item.quantity}`} className={styles.item}>
-                  <div>
-                    {item.productName} — {item.quantity} × ${Number(item.price).toFixed(2)}
-                  </div>
+                  <Link legacyBehavior href={`/product/${item.productId}`}>
+                    <a color='green'>
+                      {item.productName} — {item.quantity} × ${Number(item.price).toFixed(2)}
+                    </a>
+                  </Link>
                 </li>
               ))}
             </ul>

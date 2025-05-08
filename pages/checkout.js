@@ -53,40 +53,39 @@ export default function Checkout() {
 
   // Load draft or fetch profile & addresses from DB
   useEffect(() => {
-    // Try draft in localStorage first
+    // 1) don’t run until auth state is settled
+    if (loading) return;
+
+    // 2) Try draft in localStorage first
     const draft = localStorage.getItem(STORAGE_KEY);
     if (draft) {
-      try { setUserData(JSON.parse(draft)); }
-      catch {}
+      try { setUserData(JSON.parse(draft)); } catch {}
       setLoadedProfile(true);
-      return; 
     }
 
-    // No draft: if logged-in, fetch profile & addresses from DB
-    const token = Cookies.get("token");
-    if (token && user) {
-      fetch("/api/user/profile", {
-        headers: { "Authorization": `Bearer ${token}` }
+    // 3) If logged in (user context) fetch profile via HTTP-only cookie
+    if (user) {
+      fetch("/api/profile", {
+        credentials: "same-origin"
       })
         .then(res => res.json())
         .then(profile => {
-          // auto-fill form fields
           setUserData(prev => ({
             ...prev,
-            name:            profile.full_name    || prev.name,
-            phone:           profile.phone        || prev.phone,
-            address:         profile.delivery_address?.[0] || prev.address,
-            billingAddress:  profile.billing_address      || prev.billingAddress
+            name:           profile.fullName    || prev.name,
+            phone:          profile.phone        || prev.phone,
+            address:        profile.deliveryAddress?.[0] || prev.address,
+            billingAddress: profile.billingAddress      || prev.billingAddress
           }));
           setSavedAddresses(profile.delivery_address || []);
         })
         .catch(console.error)
         .finally(() => setLoadedProfile(true));
     } else {
-      // 3) Guest + no draft: just proceed
+      // guest + no draft
       setLoadedProfile(true);
     }
-  }, [user]);
+  }, [user, loading]);
 
   // Sync billing address if checkbox is checked
   useEffect(() => {

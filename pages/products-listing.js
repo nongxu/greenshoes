@@ -195,7 +195,8 @@ const ProductListing = ({ products, onsale, selectedCategory }) => {
             padding: '20px',
           }}
         >
-          {filteredProducts.map(product => (
+          {/* slice() here ensures we render at most 25 products */}
+          {filteredProducts.slice(0, 25).map(product => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
