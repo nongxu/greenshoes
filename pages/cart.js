@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Cookies from 'js-cookie'
 import Link from 'next/link'
@@ -9,6 +9,9 @@ export default function CartPage() {
   const router = useRouter()
   const { user, loading } = useUserContext()
   const [cartItems, setCartItems] = useState([])
+  const prevUser = useRef(user)
+
+  useEffect(() => { prevUser.current = user }, [user])
 
   // Redirect admins away from the cart
   useEffect(() => {
@@ -30,11 +33,11 @@ export default function CartPage() {
   }, [])
 
   useEffect(() => {
-    if (!loading && !user) {
-      setCartItems([]);
-      Cookies.remove('cart');
+    if (!loading && prevUser.current && !user) {
+      setCartItems([])
+      Cookies.remove('cart')
     }
-  }, [user, loading]);
+  }, [user, loading])
 
   // Update cart in both state and cookie
   const updateCartCookie = (items) => {

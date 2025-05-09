@@ -70,15 +70,22 @@ export default function AdminDashboard({ user }) {
       const detail = await res.json();
       setSelectedProduct(detail);
       setFormValues({
-        name: detail.name,
+        name: detail.name || '',
         description: detail.description || '',
-        price: detail.price,
-        shoe_category: detail.shoe_category,
+        price: detail.price?.toString() || '',
+        shoe_category: detail.shoe_category || '',
         image: '',
-        variants: detail.variants || [{ size: '', stock_qty: '' }]
+        variants: Array.isArray(detail.variants)
+          ? detail.variants.map(v => ({
+              id: v.id,
+              size: v.size,
+              stock_qty: v.stock.toString()
+            }))
+          : [{ size: '', stock_qty: '' }]
       });
       setMode('edit');
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert('Failed to load product');
     }
   }
@@ -92,6 +99,7 @@ export default function AdminDashboard({ user }) {
       shoe_category: formValues.shoe_category,
       images: formValues.image ? [formValues.image] : [],
       variants: formValues.variants.map(v => ({
+        id: v.id,
         size: v.size,
         stock_qty: Number(v.stock_qty)
       }))
