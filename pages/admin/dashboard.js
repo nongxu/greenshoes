@@ -14,7 +14,7 @@ export default function AdminDashboard({ user }) {
     price: '',
     shoe_category: '',
     image: '',
-    variants: [{ size: '', stock_qty: '' }]
+    variants: [{ size: '', stock: '' }]
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -48,7 +48,7 @@ export default function AdminDashboard({ user }) {
   const addVariant = () =>
     setFormValues(prev => ({
       ...prev,
-      variants: [...prev.variants, { size: '', stock_qty: '' }]
+      variants: [...prev.variants, { size: '', stock: '' }]
     }));
 
   const removeVariant = idx =>
@@ -58,7 +58,7 @@ export default function AdminDashboard({ user }) {
     }));
 
   function prepareCreate() {
-    setFormValues({ name: '', description: '', price: '', shoe_category: '', image: '', variants: [{ size: '', stock_qty: '' }] });
+    setFormValues({ name: '', description: '', price: '', shoe_category: '', image: '', variants: [{ size: '', stock: '' }] });
     setSelectedProduct(null);
     setMode('create');
   }
@@ -75,7 +75,7 @@ export default function AdminDashboard({ user }) {
         price: detail.price,
         shoe_category: detail.shoe_category,
         image: detail.image || '',
-        variants: detail.variants || [{ size: '', stock_qty: '' }]
+        variants: detail.variants.map(v => ({ size: v.size, stock: v.stock }))
       });
       setMode('edit');
     } catch {
@@ -93,7 +93,7 @@ export default function AdminDashboard({ user }) {
       image: formValues.image,
       variants: formValues.variants.map(v => ({
         size: v.size,
-        stock_qty: Number(v.stock_qty)
+        stock_qty: Number(v.stock)
       }))
     };
     const endpoint = mode === 'create'
@@ -198,8 +198,8 @@ export default function AdminDashboard({ user }) {
                       placeholder="Stock"
                       required
                       min="0"
-                      value={v.stock_qty}
-                      onChange={e => handleVariantChange(i, 'stock_qty', e.target.value)}
+                      value={v.stock}
+                      onChange={e => handleVariantChange(i, 'stock', e.target.value)}
                     />
                     {formValues.variants.length > 1 && (
                       <button type="button" className="btn danger" onClick={() => removeVariant(i)}>
