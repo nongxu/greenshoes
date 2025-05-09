@@ -159,12 +159,9 @@ const ProductListing = ({ products, onsale, selectedCategory }) => {
             </Link>
           ))}
         </nav>
-        { !selectedCategory && (
+        {!selectedCategory && onsale.length > 0 && (
           <>
-            {/* Slider at top */}
             <ImageSlider />
-
-            {/* On Sale slider */}
             <div 
               className="on-sale-section" 
               style={{ maxWidth: '800px', margin: '20px auto', padding: '20px 0' }}
@@ -220,7 +217,11 @@ export async function getServerSideProps({ query }) {
       image: product.image || fallbackImages[Math.floor(Math.random() * fallbackImages.length)]
     }));
     const shuffled = [...productsWithImages].sort(() => Math.random() - 0.5);
-    const onsale = shuffled.slice(0, 6);
+    let onsale = [];
+    if (productsWithImages.length >= 4) {
+      const shuffled = [...productsWithImages].sort(() => Math.random() - 0.5);
+      onsale = shuffled.slice(0, 6);
+    }
     const selectedCategory = query.category || null;
     return { props: { products: productsWithImages, onsale, selectedCategory } };
   } catch (error) {
