@@ -5,9 +5,8 @@ import styles from '../../styles/user-dashboard.module.css'
 export async function getServerSideProps({ req }) {
   // Forward the cookie so Express can read the token
   const cookie = req.headers.cookie || ''
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
   const host = req.headers.host
-  const url = `${protocol}://${host}/api/profile`
+  const url = `http://localhost:3000/api/profile`
 
   const res = await fetch(url, {
     headers: { cookie }

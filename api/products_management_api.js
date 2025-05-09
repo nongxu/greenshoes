@@ -9,7 +9,7 @@ router.use(adminOnly);
 // Create a new product
 router.post('/', async (req, res) => {
   const { name, description, price, shoe_category, variants = [], images = [] } = req.body;
-
+  console.log('img urls:', images);
   if (
     !name ||
     typeof price !== 'number' ||
@@ -38,8 +38,18 @@ router.post('/', async (req, res) => {
         [product.id, v.size, v.stock_qty]
       );
     }
-    // insert images (if you wish)
-    // …
+
+    // insert images
+    for (let i = 0; i < images.length; i++) {
+      const url = images[i];
+      console.log('Inserting image:', url);
+      await client.query(
+        `INSERT INTO product_images (product_id,image_url,is_primary)
+         VALUES ($1,$2,$3)`,
+        [product.id, url, i === 0]  
+      );
+    }
+
     await client.query('COMMIT');
     // re‐fetch with variants & images
     const result = await pool.query(
@@ -87,7 +97,6 @@ router.patch('/:id', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // 1. 动态构造 products 更新
     const fields = [];
     const values = [];
     let idx = 1;
@@ -114,9 +123,7 @@ router.patch('/:id', async (req, res) => {
     }
 
     if (fields.length > 0) {
-      // 添加更新时间字段，无需占位符
       fields.push(`updated_at = now()`);
-      // 把 id 作为最后一个参数
       const updateQuery = `
         UPDATE products
            SET ${fields.join(', ')}
@@ -126,7 +133,6 @@ router.patch('/:id', async (req, res) => {
       await client.query(updateQuery, values);
     }
 
-    // 2. 处理 variants（可根据需要调整顺序）
     await client.query(`DELETE FROM product_variants WHERE product_id=$1`, [id]);
     for (const v of variants) {
       await client.query(
@@ -136,12 +142,9 @@ router.patch('/:id', async (req, res) => {
       );
     }
 
-    // 3. 处理 images
-    // ...existing code for deleting/inserting images...
 
     await client.query('COMMIT');
 
-    // 4. 返回最新数据
     const { rows } = await client.query(
       `SELECT p.*, 
               COALESCE(json_agg(json_build_object(
@@ -170,19 +173,33 @@ router.patch('/:id', async (req, res) => {
 // Delete a product
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
-
+  const client = await pool.connect();
   try {
-    const { rowCount } = await pool.query(
-      `DELETE FROM products WHERE id = $1`,
+    await client.query('BEGIN');
+    await client.query(
+      'DELETE FROM product_images WHERE product_id = $1',
+      [id]
+    );
+    await client.query(
+      'DELETE FROM product_variants WHERE product_id = $1',
+      [id]
+    );
+    const { rowCount } = await client.query(
+      'DELETE FROM products WHERE id = $1',
       [id]
     );
     if (rowCount === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Product not found' });
     }
+    await client.query('COMMIT');
     res.json({ message: 'Product deleted successfully' });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Error deleting product:', err);
     res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    client.release();
   }
 });
 

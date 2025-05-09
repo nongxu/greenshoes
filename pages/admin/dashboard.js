@@ -14,7 +14,7 @@ export default function AdminDashboard({ user }) {
     price: '',
     shoe_category: '',
     image: '',
-    variants: [{ size: '', stock: '' }]
+    variants: [{ size: '', stock_qty: '' }]
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -48,7 +48,7 @@ export default function AdminDashboard({ user }) {
   const addVariant = () =>
     setFormValues(prev => ({
       ...prev,
-      variants: [...prev.variants, { size: '', stock: '' }]
+      variants: [...prev.variants, { size: '', stock_qty: '' }]
     }));
 
   const removeVariant = idx =>
@@ -58,7 +58,7 @@ export default function AdminDashboard({ user }) {
     }));
 
   function prepareCreate() {
-    setFormValues({ name: '', description: '', price: '', shoe_category: '', image: '', variants: [{ size: '', stock: '' }] });
+    setFormValues({ name: '', description: '', price: '', shoe_category: '', image: '', variants: [{ size: '', stock_qty: '' }] });
     setSelectedProduct(null);
     setMode('create');
   }
@@ -74,8 +74,8 @@ export default function AdminDashboard({ user }) {
         description: detail.description || '',
         price: detail.price,
         shoe_category: detail.shoe_category,
-        image: detail.image || '',
-        variants: detail.variants.map(v => ({ size: v.size, stock: v.stock }))
+        image: '',
+        variants: detail.variants || [{ size: '', stock_qty: '' }]
       });
       setMode('edit');
     } catch {
@@ -90,10 +90,10 @@ export default function AdminDashboard({ user }) {
       description: formValues.description,
       price: parseFloat(formValues.price),
       shoe_category: formValues.shoe_category,
-      image: formValues.image,
+      images: formValues.image ? [formValues.image] : [],
       variants: formValues.variants.map(v => ({
         size: v.size,
-        stock_qty: Number(v.stock)
+        stock_qty: Number(v.stock_qty)
       }))
     };
     const endpoint = mode === 'create'
@@ -198,8 +198,8 @@ export default function AdminDashboard({ user }) {
                       placeholder="Stock"
                       required
                       min="0"
-                      value={v.stock}
-                      onChange={e => handleVariantChange(i, 'stock', e.target.value)}
+                      value={v.stock_qty}
+                      onChange={e => handleVariantChange(i, 'stock_qty', e.target.value)}
                     />
                     {formValues.variants.length > 1 && (
                       <button type="button" className="btn danger" onClick={() => removeVariant(i)}>

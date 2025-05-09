@@ -225,7 +225,12 @@ export async function getServerSideProps({ params }) {
   
     // Normalize image URLs for product
     let imgs = Array.isArray(product.images) ? product.images : [];
-    imgs = imgs.map(u => u.startsWith('/') ? u : `/images/${u}`);
+    imgs = imgs.map(u => {
+        if (u.startsWith('/') || u.startsWith('http://') || u.startsWith('https://')) {
+            return u;
+        }
+        return `/images/${u}`;
+    });
     if (imgs.length === 0) imgs = ['/images/default.jpg'];
     product.images = imgs;
   
@@ -234,18 +239,16 @@ export async function getServerSideProps({ params }) {
     try {
         const relRes = await fetch(`http://localhost:3000/api/products?exclude=${product.id}&limit=4`);
         if (relRes.ok) {
-        relatedProducts = await relRes.json();
-        relatedProducts = Array.isArray(relatedProducts)
-            ? relatedProducts.map(rp => {
-                let img = rp.image;
-                if (!img || img === '') {
-                img = '/images/default.jpg';
-                } else if (!img.startsWith('/')) {
-                img = `/images/${img}`;
-                }
-                return { ...rp, image: img };
-            })
-            : [];
+            const data = await relRes.json();
+            relatedProducts = Array.isArray(data)
+                ? data.map(rp => {
+                    let img = rp.image || '';
+                    if (!(img.startsWith('/') || img.startsWith('http://') || img.startsWith('https://'))) {
+                        img = `/images/${img}`;
+                    }
+                    return { ...rp, image: img };
+                })
+                : [];
         }
     } catch (error) {
         console.error('Error fetching related products:', error);

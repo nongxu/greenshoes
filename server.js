@@ -12,9 +12,13 @@ const server = express();
 server.enable('trust proxy');
 server.use(express.json());
 server.use(cookieParser());
+
 server.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production' && !req.secure) {
-      return res.redirect(`https://${req.headers.host}${req.url}`);
+    const securePages = ['/signin', '/signup'];
+    if (securePages.includes(req.path)) {
+      if (!req.secure) {
+        return res.redirect(`https://${req.headers.host}${req.url}`);
+      }
     }
     next();
   });
