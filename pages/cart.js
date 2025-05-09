@@ -29,6 +29,13 @@ export default function CartPage() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!loading && !user) {
+      setCartItems([]);
+      Cookies.remove('cart');
+    }
+  }, [user, loading]);
+
   // Update cart in both state and cookie
   const updateCartCookie = (items) => {
     setCartItems(items)
